@@ -1,0 +1,214 @@
+// Firestore Security Rules - Ice Beer Management - VERSÃO FINAL CORRIGIDA
+// Cole essas regras no Console Firebase -> Firestore Database -> Rules
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Função para verificar se o usuário está autenticado
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Função para verificar se é um usuário válido do sistema
+    function isValidUser() {
+      return isAuthenticated() && 
+             request.auth.token.email in [
+               'conv@icebeer.local',
+               'peti@icebeer.local', 
+               'disk@icebeer.local',
+               'dono@icebeer.local'
+             ];
+    }
+    
+    // Função para verificar se é o proprietário
+    function isOwner() {
+      return isAuthenticated() && 
+             request.auth.token.email == 'dono@icebeer.local';
+    }
+    
+    // Função para verificar se é gestor do segmento
+    function isSegmentManager(segment) {
+      return isAuthenticated() && 
+             ((segment == 'conveniences' && request.auth.token.email == 'conv@icebeer.local') ||
+              (segment == 'petiscarias' && request.auth.token.email == 'peti@icebeer.local') ||
+              (segment == 'diskChopp' && request.auth.token.email == 'disk@icebeer.local'));
+    }
+    
+    // Função para verificar se pode acessar o segmento
+    function canAccessSegment(segment) {
+      return isOwner() || isSegmentManager(segment);
+    }
+    
+    // Função para validar dados de entrada obrigatórios
+    function hasRequiredBillingFields() {
+      return request.resource.data.keys().hasAll([
+        'startDate', 'endDate', 'amount', 'segment', 'store'
+      ]);
+    }
+    
+    // Função para validar tipos de dados
+    function hasValidBillingTypes() {
+      return request.resource.data.startDate is string &&
+             request.resource.data.endDate is string &&
+             request.resource.data.amount is number &&
+             request.resource.data.amount > 0 &&
+             request.resource.data.segment is string &&
+             request.resource.data.store is string;
+    }
+    
+    // Função para validar segmentos permitidos
+    function isValidSegment() {
+      return request.resource.data.segment in ['conveniences', 'petiscarias', 'diskChopp'];
+    }
+    
+    // Função para validar stores por segmento
+    function isValidStoreForSegment() {
+      return (request.resource.data.segment == 'conveniences' && 
+              request.resource.data.store in ['loja1', 'loja2', 'loja3']) ||
+             (request.resource.data.segment == 'petiscarias' && 
+              request.resource.data.store in ['loja1', 'loja2']) ||
+             (request.resource.data.segment == 'diskChopp' && 
+              request.resource.data.store == 'delivery');
+    }
+    
+    // REGRAS PARA BILLINGENTRIES
+    match /billingEntries/{entryId} {
+      // Leitura: Proprietário vê tudo, gestores veem apenas seu segmento
+      allow read: if isValidUser() && 
+                     (isOwner() || 
+                      canAccessSegment(resource.data.segment));
+      
+      // Criação: Apenas gestores podem criar para seu segmento
+      allow create: if isValidUser() && 
+                       !isOwner() &&
+                       canAccessSegment(request.resource.data.segment) &&
+                       hasRequiredBillingFields() &&
+                       hasValidBillingTypes() &&
+                       isValidSegment() &&
+                       isValidStoreForSegment() &&
+                       // Validar limites de valor
+                       request.resource.data.amount <= 1000000 &&
+                       // Validar descrição (opcional)
+                       (!('description' in request.resource.data) || 
+                        (request.resource.data.description is string && 
+                         request.resource.data.description.size() <= 200));
+      
+      // Atualização: Apenas o gestor responsável pode atualizar
+      allow update: if isValidUser() && 
+                       !isOwner() &&
+                       canAccessSegment(resource.data.segment) &&
+                       // Não pode alterar campos críticos
+                       request.resource.data.segment == resource.data.segment &&
+                       request.resource.data.store == resource.data.store &&
+                       // Validar campos atualizáveis
+                       request.resource.data.amount > 0 &&
+                       request.resource.data.amount <= 1000000 &&
+                       // Validar descrição se presente
+                       (!('description' in request.resource.data) || 
+                        (request.resource.data.description is string && 
+                         request.resource.data.description.size() <= 200));
+      
+      // Exclusão: Apenas o gestor responsável pode excluir
+      allow delete: if isValidUser() && 
+                       !isOwner() &&
+                       canAccessSegment(resource.data.segment);
+    }
+    
+    // REGRAS PARA MONTHLYGOALS
+    match /monthlyGoals/{goalId} {
+      // Leitura: Todos os usuários autenticados podem ler
+      allow read: if isValidUser();
+      
+      // Criação/Atualização: Proprietário e gestores podem criar/atualizar metas
+      allow create, update: if isValidUser() &&
+                               // Validar estrutura da meta
+                               request.resource.data.keys().hasAll(['key', 'amount']) &&
+                               request.resource.data.key is string &&
+                               request.resource.data.amount is number &&
+                               request.resource.data.amount >= 0 &&
+                               request.resource.data.amount <= 10000000;
+      
+      // Exclusão: Apenas usuários autenticados podem excluir metas
+      allow delete: if isValidUser();
+    }
+    
+    // REGRAS PARA TESTES DE CONECTIVIDADE
+    match /_health/{healthId} {
+      // Permitir leitura para testes de conectividade
+      allow read: if true;
+    }
+    
+    match /_test/{testId} {
+      // Permitir leitura para testes
+      allow read: if true;
+    }
+    
+    // REGRAS PARA LOGS DE SISTEMA (futuro)
+    match /systemLogs/{logId} {
+      // Apenas leitura para proprietário
+      allow read: if isOwner();
+      
+      // Sistema pode criar logs
+      allow create: if isValidUser();
+    }
+    
+    // REGRAS PARA CONFIGURAÇÕES DO SISTEMA (futuro)
+    match /systemConfig/{configId} {
+      // Apenas proprietário pode ler/escrever configurações
+      allow read, write: if isOwner();
+    }
+    
+    // REGRAS PARA MÉTRICAS DE PERFORMANCE (futuro)
+    match /performanceMetrics/{metricId} {
+      // Todos podem ler métricas
+      allow read: if isValidUser();
+      
+      // Sistema pode criar métricas
+      allow create: if isValidUser();
+    }
+    
+    // REGRAS PARA AUDITORIA (futuro)
+    match /auditLog/{auditId} {
+      // Apenas proprietário pode ler logs de auditoria
+      allow read: if isOwner();
+      
+      // Sistema pode criar logs de auditoria
+      allow create: if isValidUser();
+    }
+    
+    // NEGAR ACESSO A QUALQUER OUTRA COLEÇÃO
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
+
+/*
+INSTRUÇÕES PARA APLICAR AS REGRAS:
+
+1. Acesse: Console Firebase → Firestore Database → Rules
+2. DELETE todo o conteúdo existente
+3. COLE as regras acima
+4. Clique em "Publicar"
+5. Aguarde confirmação de que as regras foram aplicadas
+
+TESTE DAS REGRAS:
+1. No Console Firebase → Firestore → Rules
+2. Clique em "Simular" 
+3. Teste operações com diferentes usuários:
+   - conv@icebeer.local (pode criar em conveniences)
+   - peti@icebeer.local (pode criar em petiscarias)
+   - disk@icebeer.local (pode criar em diskChopp)
+   - dono@icebeer.local (pode ler tudo, mas não criar)
+
+VALIDAÇÕES INCLUÍDAS:
+✅ Autenticação obrigatória
+✅ Segmentação por usuário
+✅ Validação de tipos de dados
+✅ Limites de valores (R$ 1 milhão max)
+✅ Validação de lojas por segmento
+✅ Proteção contra alterações indevidas
+✅ Suporte a testes de conectividade
+✅ Logs e auditoria (preparado para futuro)
+*/
