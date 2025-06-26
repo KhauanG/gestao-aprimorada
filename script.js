@@ -426,6 +426,7 @@ class IceBeerManagement {
 
     updateOwnerDashboard() {
         const summaryStats = document.getElementById('summaryStats');
+        const goalsOverview = document.getElementById('goalsOverview');
         if (!summaryStats) return;
         
         const currentMonth = new Date().getMonth() + 1;
@@ -439,30 +440,45 @@ class IceBeerManagement {
         const diskTotal = this.calculateSegmentTotal('diskChopp', currentMonth, currentYear);
         const totalGeral = convTotal + petiTotal + diskTotal;
 
+        // Calcular dias do mês atual
+        const today = new Date();
+        const currentDay = today.getDate();
+        const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
+        
+        // Média diária geral
+        const dailyAverage = currentDay > 0 ? totalGeral / currentDay : 0;
+        const monthlyProjection = dailyAverage * daysInMonth;
+
         summaryStats.innerHTML = `
             <div class="stat-item">
                 <div class="stat-value">R$ ${this.formatCurrency(totalGeral)}</div>
                 <div class="stat-label">Faturamento Total do Mês</div>
             </div>
             <div class="stat-item">
-                <div class="stat-value">R$ ${this.formatCurrency(convTotal)}</div>
-                <div class="stat-label">Conveniências</div>
+                <div class="stat-value">R$ ${this.formatCurrency(dailyAverage)}</div>
+                <div class="stat-label">Média Diária Geral</div>
             </div>
             <div class="stat-item">
-                <div class="stat-value">R$ ${this.formatCurrency(petiTotal)}</div>
-                <div class="stat-label">Petiscarias</div>
+                <div class="stat-value">R$ ${this.formatCurrency(monthlyProjection)}</div>
+                <div class="stat-label">Projeção Mensal Geral</div>
             </div>
             <div class="stat-item">
-                <div class="stat-value">R$ ${this.formatCurrency(diskTotal)}</div>
-                <div class="stat-label">Disk Chopp</div>
+                <div class="stat-value">${currentDay}/${daysInMonth}</div>
+                <div class="stat-label">Dias do Mês</div>
             </div>
         `;
+
+        // Mostrar metas por loja
+        if (goalsOverview) {
+            this.updateGoalsOverview(currentMonth, currentYear);
+        }
         
         console.log('Dashboard do proprietário atualizado:', {convTotal, petiTotal, diskTotal, totalGeral});
     }
 
     updateManagerDashboard(segment) {
         const summaryStats = document.getElementById('summaryStats');
+        const goalsOverview = document.getElementById('goalsOverview');
         if (!summaryStats) return;
         
         const currentMonth = new Date().getMonth() + 1;
@@ -473,9 +489,24 @@ class IceBeerManagement {
         const segmentTotal = this.calculateSegmentTotal(segment, currentMonth, currentYear);
         const dailyAverage = this.calculateSegmentDailyAverage(segment, currentMonth, currentYear);
         const monthlyProjection = this.calculateMonthlyProjection(dailyAverage, currentMonth, currentYear);
-        const goalKey = `${segment}-${currentMonth}-${currentYear}`;
-        const goal = this.monthlyGoals[goalKey] || 0;
-        const goalProgress = goal > 0 ? (segmentTotal / goal * 100) : 0;
+        
+        // Calcular meta geral do segmento
+        let totalGoal = 0;
+        let totalProgress = 0;
+        
+        if (segment === 'diskChopp') {
+            const goalKey = `${segment}-delivery-${currentMonth}-${currentYear}`;
+            totalGoal = this.monthlyGoals[goalKey] || 0;
+        } else {
+            const stores = this.storeConfig[segment] || [];
+            stores.forEach((store, index) => {
+                const key = `loja${index + 1}`;
+                const goalKey = `${segment}-${key}-${currentMonth}-${currentYear}`;
+                totalGoal += this.monthlyGoals[goalKey] || 0;
+            });
+        }
+        
+        totalProgress = totalGoal > 0 ? (segmentTotal / totalGoal * 100) : 0;
 
         summaryStats.innerHTML = `
             <div class="stat-item">
@@ -491,12 +522,108 @@ class IceBeerManagement {
                 <div class="stat-label">Projeção Mensal</div>
             </div>
             <div class="stat-item">
-                <div class="stat-value">${goalProgress.toFixed(1)}%</div>
+                <div class="stat-value">${totalProgress.toFixed(1)}%</div>
                 <div class="stat-label">Meta do Mês</div>
             </div>
         `;
+
+        // Mostrar metas específicas por loja
+        if (goalsOverview) {
+            this.updateGoalsOverview(currentMonth, currentYear, segment);
+        }
         
-        console.log('Dashboard do gestor atualizado:', {segmentTotal, dailyAverage, monthlyProjection, goalProgress});
+        console.log('Dashboard do gestor atualizado:', {segmentTotal, dailyAverage, monthlyProjection, totalProgress});
+    }
+
+    updateGoalsOverview(month, year, specificSegment = null) {
+        const goalsOverview = document.getElementById('goalsOverview');
+        if (!goalsOverview) return;
+
+        let html = '';
+        const segments = specificSegment ? [specificSegment] : ['conveniences', 'petiscarias', 'diskChopp'];
+
+        segments.forEach(segment => {
+            if (segment === 'diskChopp') {
+                const goalKey = `${segment}-delivery-${month}-${year}`;
+                const goal = this.monthlyGoals[goalKey] || 0;
+                const actual = this.calculateStoreTotal(segment, 'delivery', month, year);
+                const progress = goal > 0 ? (actual / goal * 100) : 0;
+
+                if (goal > 0 || actual > 0) {
+                    html += `
+                        <div class="goal-overview-item">
+                            <div class="goal-overview-header">
+                                <span class="goal-store-name">Disk Chopp - Delivery</span>
+                                <span class="goal-progress-text">${progress.toFixed(1)}%</span>
+                            </div>
+                            <div class="goal-overview-bar">
+                                <div class="goal-overview-fill" style="width: ${Math.min(progress, 100)}%"></div>
+                            </div>
+                            <div class="goal-overview-values">
+                                <span>R$ ${this.formatCurrency(actual)}</span>
+                                <span>Meta: R$ ${this.formatCurrency(goal)}</span>
+                            </div>
+                        </div>
+                    `;
+                }
+            } else {
+                const stores = this.storeConfig[segment] || [];
+                stores.forEach((store, index) => {
+                    const key = `loja${index + 1}`;
+                    const goalKey = `${segment}-${key}-${month}-${year}`;
+                    const goal = this.monthlyGoals[goalKey] || 0;
+                    const actual = this.calculateStoreTotal(segment, key, month, year);
+                    const progress = goal > 0 ? (actual / goal * 100) : 0;
+
+                    if (goal > 0 || actual > 0) {
+                        html += `
+                            <div class="goal-overview-item">
+                                <div class="goal-overview-header">
+                                    <span class="goal-store-name">${this.getSegmentName(segment)} - ${store}</span>
+                                    <span class="goal-progress-text">${progress.toFixed(1)}%</span>
+                                </div>
+                                <div class="goal-overview-bar">
+                                    <div class="goal-overview-fill" style="width: ${Math.min(progress, 100)}%"></div>
+                                </div>
+                                <div class="goal-overview-values">
+                                    <span>R$ ${this.formatCurrency(actual)}</span>
+                                    <span>Meta: R$ ${this.formatCurrency(goal)}</span>
+                                </div>
+                            </div>
+                        `;
+                    }
+                });
+            }
+        });
+
+        goalsOverview.innerHTML = html || '<p>Nenhuma meta cadastrada para este período.</p>';
+    }
+
+    calculateStoreTotal(segment, store, month, year) {
+        console.log(`Calculando total para ${segment}-${store}, ${month}/${year}`);
+        
+        let total = 0;
+        
+        try {
+            if (segment === 'diskChopp') {
+                const data = this.billingData.diskChopp || [];
+                total = data.reduce((sum, entry) => {
+                    return sum + this.calculateEntryAmountForMonth(entry, month, year);
+                }, 0);
+            } else {
+                const segmentData = this.billingData[segment] || {};
+                const storeData = segmentData[store] || [];
+                total = storeData.reduce((sum, entry) => {
+                    return sum + this.calculateEntryAmountForMonth(entry, month, year);
+                }, 0);
+            }
+        } catch (error) {
+            console.error('Erro ao calcular total da loja:', error);
+            return 0;
+        }
+        
+        console.log(`Total calculado para ${segment}-${store}: R$ ${total}`);
+        return total;
     }
 
     // CORREÇÃO: Cálculos corrigidos com tratamento adequado de datas
@@ -792,10 +919,13 @@ class IceBeerManagement {
                         <div class="billing-store">${entry.storeName}${entry.description ? ` - ${entry.description}` : ''}</div>
                     </div>
                     <div class="billing-actions">
-                        <button class="btn-edit" onclick="app.editEntry('${entry.id}', '${segment}', '${entry.store}')">
+                        <button class="btn-report" onclick="app.generatePeriodReport('${entry.id}', '${segment}', '${entry.store}', '${entry.startDate}', '${entry.endDate}')" title="Relatório do Período">
+                            📊
+                        </button>
+                        <button class="btn-edit" onclick="app.editEntry('${entry.id}', '${segment}', '${entry.store}')" title="Editar">
                             ✏️
                         </button>
-                        <button class="btn-delete" onclick="app.deleteEntry('${entry.id}', '${segment}', '${entry.store}')">
+                        <button class="btn-delete" onclick="app.deleteEntry('${entry.id}', '${segment}', '${entry.store}')" title="Excluir">
                             🗑️
                         </button>
                     </div>
@@ -807,6 +937,168 @@ class IceBeerManagement {
         } catch (error) {
             console.error('Erro ao carregar histórico:', error);
             historyContainer.innerHTML = '<p>Erro ao carregar histórico.</p>';
+        }
+    }
+
+    generatePeriodReport(entryId, segment, store, startDate, endDate) {
+        console.log(`Gerando relatório para período: ${startDate} a ${endDate}, ${segment}-${store}`);
+        
+        try {
+            // Encontrar a entrada específica
+            let entry;
+            if (segment === 'diskChopp') {
+                const diskData = this.billingData.diskChopp || [];
+                entry = diskData.find(e => e.id && e.id.toString() === entryId.toString());
+            } else {
+                const segmentData = this.billingData[segment] || {};
+                const storeData = segmentData[store] || [];
+                entry = storeData.find(e => e.id && e.id.toString() === entryId.toString());
+            }
+
+            if (!entry) {
+                this.showNotification('Entrada não encontrada!', 'error');
+                return;
+            }
+
+            // Calcular dias do período
+            const startDateObj = this.parseLocalDate(startDate);
+            const endDateObj = this.parseLocalDate(endDate);
+            const periodDays = Math.ceil((endDateObj - startDateObj) / (1000 * 60 * 60 * 24)) + 1;
+            
+            // Calcular estatísticas
+            const totalAmount = parseFloat(entry.amount) || 0;
+            const dailyAverage = periodDays > 0 ? totalAmount / periodDays : 0;
+            
+            // Projeção mensal baseada na média diária
+            const currentMonth = startDateObj.getMonth() + 1;
+            const currentYear = startDateObj.getFullYear();
+            const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
+            const monthlyProjection = dailyAverage * daysInMonth;
+
+            // Buscar meta da loja (se houver)
+            const goalKey = segment === 'diskChopp' 
+                ? `${segment}-delivery-${currentMonth}-${currentYear}`
+                : `${segment}-${store}-${currentMonth}-${currentYear}`;
+            const goal = this.monthlyGoals[goalKey] || 0;
+            const goalProgress = goal > 0 ? (totalAmount / goal * 100) : 0;
+
+            // Criar modal com o relatório
+            const modalHtml = `
+                <div class="period-report-modal" style="
+                    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                    background: rgba(0,0,0,0.8); z-index: 1000;
+                    display: flex; align-items: center; justify-content: center;
+                ">
+                    <div style="
+                        background: white; padding: 2.5rem; border-radius: 20px; 
+                        box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); max-width: 600px; width: 90%;
+                        max-height: 80vh; overflow-y: auto; position: relative;
+                    ">
+                        <div style="position: absolute; top: 0; left: 0; right: 0; height: 4px;
+                            background: linear-gradient(135deg, #0ea5e9, #38bdf8);"></div>
+                        
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                            <h3 style="margin: 0; color: #0f172a; font-size: 1.5rem; font-weight: 700;">
+                                📊 Relatório do Período
+                            </h3>
+                            <button onclick="this.closest('.period-report-modal').remove()" style="
+                                background: none; border: none; font-size: 1.5rem; cursor: pointer;
+                                color: #64748b; padding: 0.5rem; border-radius: 8px; transition: all 0.3s ease;
+                            " onmouseover="this.style.background='#f1f5f9'; this.style.color='#0f172a'" 
+                               onmouseout="this.style.background='none'; this.style.color='#64748b'">✖</button>
+                        </div>
+
+                        <div style="background: #f0f9ff; padding: 1.5rem; border-radius: 12px; margin-bottom: 2rem; border: 1px solid #e0f2fe;">
+                            <h4 style="margin: 0 0 1rem 0; color: #0f172a;">📅 Informações do Período</h4>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                                <div><strong>Loja:</strong> ${this.getStoreName(segment, store)}</div>
+                                <div><strong>Período:</strong> ${periodDays} dias</div>
+                            </div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                <div><strong>Data Início:</strong> ${this.formatDate(startDate)}</div>
+                                <div><strong>Data Fim:</strong> ${this.formatDate(endDate)}</div>
+                            </div>
+                            ${entry.description ? `<div style="margin-top: 1rem;"><strong>Observações:</strong> ${entry.description}</div>` : ''}
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; margin-bottom: 2rem;">
+                            <div style="text-align: center; padding: 1.5rem; background: linear-gradient(135deg, #f0f9ff, #e0f2fe); 
+                                border-radius: 12px; border: 1px solid #bae6fd;">
+                                <div style="font-size: 2rem; font-weight: 800; color: #0ea5e9; margin-bottom: 0.5rem;">
+                                    R$ ${this.formatCurrency(totalAmount)}
+                                </div>
+                                <div style="color: #475569; font-weight: 600; font-size: 0.9rem; text-transform: uppercase;">
+                                    Faturamento Total
+                                </div>
+                            </div>
+                            <div style="text-align: center; padding: 1.5rem; background: linear-gradient(135deg, #f0f9ff, #e0f2fe); 
+                                border-radius: 12px; border: 1px solid #bae6fd;">
+                                <div style="font-size: 2rem; font-weight: 800; color: #0ea5e9; margin-bottom: 0.5rem;">
+                                    R$ ${this.formatCurrency(dailyAverage)}
+                                </div>
+                                <div style="color: #475569; font-weight: 600; font-size: 0.9rem; text-transform: uppercase;">
+                                    Média Diária
+                                </div>
+                            </div>
+                            <div style="text-align: center; padding: 1.5rem; background: linear-gradient(135deg, #f0f9ff, #e0f2fe); 
+                                border-radius: 12px; border: 1px solid #bae6fd;">
+                                <div style="font-size: 2rem; font-weight: 800; color: #0ea5e9; margin-bottom: 0.5rem;">
+                                    R$ ${this.formatCurrency(monthlyProjection)}
+                                </div>
+                                <div style="color: #475569; font-weight: 600; font-size: 0.9rem; text-transform: uppercase;">
+                                    Projeção Mensal
+                                </div>
+                            </div>
+                            <div style="text-align: center; padding: 1.5rem; background: linear-gradient(135deg, #f0f9ff, #e0f2fe); 
+                                border-radius: 12px; border: 1px solid #bae6fd;">
+                                <div style="font-size: 2rem; font-weight: 800; color: ${goalProgress >= 100 ? '#059669' : goalProgress >= 50 ? '#d97706' : '#dc2626'}; margin-bottom: 0.5rem;">
+                                    ${goalProgress.toFixed(1)}%
+                                </div>
+                                <div style="color: #475569; font-weight: 600; font-size: 0.9rem; text-transform: uppercase;">
+                                    ${goal > 0 ? 'Progresso da Meta' : 'Sem Meta'}
+                                </div>
+                            </div>
+                        </div>
+
+                        ${goal > 0 ? `
+                        <div style="background: #f8fafc; padding: 1.5rem; border-radius: 12px; border: 1px solid #e2e8f0;">
+                            <h4 style="margin: 0 0 1rem 0; color: #0f172a;">🎯 Meta da Loja</h4>
+                            <div style="background: #e2e8f0; height: 12px; border-radius: 6px; overflow: hidden; margin-bottom: 1rem;">
+                                <div style="background: linear-gradient(90deg, ${goalProgress >= 100 ? '#059669' : '#0ea5e9'}, ${goalProgress >= 100 ? '#10b981' : '#38bdf8'}); 
+                                    height: 100%; width: ${Math.min(goalProgress, 100)}%; transition: width 0.5s ease; border-radius: 6px;"></div>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; font-size: 0.95rem; color: #475569; font-weight: 600;">
+                                <span>R$ ${this.formatCurrency(totalAmount)} / R$ ${this.formatCurrency(goal)}</span>
+                                <span>${goalProgress >= 100 ? '✅ Meta Atingida!' : `Faltam R$ ${this.formatCurrency(Math.max(0, goal - totalAmount))}`}</span>
+                            </div>
+                        </div>
+                        ` : `
+                        <div style="background: #fef3c7; padding: 1.5rem; border-radius: 12px; border: 1px solid #fbbf24; text-align: center;">
+                            <p style="margin: 0; color: #92400e; font-weight: 600;">
+                                ⚠️ Nenhuma meta cadastrada para esta loja no mês de ${this.getMonthName(currentMonth)}/${currentYear}
+                            </p>
+                        </div>
+                        `}
+
+                        <div style="text-align: center; margin-top: 2rem;">
+                            <button onclick="this.closest('.period-report-modal').remove()" style="
+                                background: linear-gradient(135deg, #0f172a, #1e293b); color: white; border: none;
+                                padding: 1rem 2rem; border-radius: 10px; font-weight: 600; cursor: pointer;
+                                transition: all 0.3s ease; font-size: 1rem;
+                            " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 10px 25px rgba(15,23,42,0.4)'"
+                               onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'">
+                                Fechar Relatório
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+            
+        } catch (error) {
+            console.error('Erro ao gerar relatório do período:', error);
+            this.showNotification('Erro ao gerar relatório do período!', 'error');
         }
     }
 
@@ -1021,7 +1313,7 @@ class IceBeerManagement {
         
         try {
             if (reportStore === 'all' && this.currentUser.segment === 'owner') {
-                this.generateOwnerReport(month, year, resultsContainer);
+                this.generateAllSegmentsReport(month, year, resultsContainer);
             } else {
                 this.generateSegmentReport(reportStore, month, year, resultsContainer);
             }
@@ -1033,74 +1325,14 @@ class IceBeerManagement {
         }
     }
 
-    generateOwnerReport(month, year, container) {
-        const segments = ['conveniences', 'petiscarias', 'diskChopp'];
-        const segmentNames = {
-            conveniences: 'Conveniências',
-            petiscarias: 'Petiscarias',
-            diskChopp: 'Disk Chopp'
-        };
-        
-        let totalGeral = 0;
-        let reportHtml = `<h3>Relatório Geral - ${this.getMonthName(month)}/${year}</h3>`;
-        
-        segments.forEach(segment => {
-            const segmentTotal = this.calculateSegmentTotal(segment, month, year);
-            const segmentAverage = this.calculateSegmentDailyAverage(segment, month, year);
-            const segmentProjection = this.calculateMonthlyProjection(segmentAverage, month, year);
-            
-            totalGeral += segmentTotal;
-            
-            reportHtml += `
-                <div class="report-segment" style="margin-bottom: 2rem;">
-                    <h4 style="color: var(--royal-blue); margin-bottom: 1rem;">${segmentNames[segment]}</h4>
-                    <div class="report-summary">
-                        <div class="report-item">
-                            <div class="report-value">R$ ${this.formatCurrency(segmentTotal)}</div>
-                            <div class="report-label">Total do Período</div>
-                        </div>
-                        <div class="report-item">
-                            <div class="report-value">R$ ${this.formatCurrency(segmentAverage)}</div>
-                            <div class="report-label">Média Diária</div>
-                        </div>
-                        <div class="report-item">
-                            <div class="report-value">R$ ${this.formatCurrency(segmentProjection)}</div>
-                            <div class="report-label">Projeção Mensal</div>
-                        </div>
-                    </div>
-                </div>
-            `;
-        });
-        
-        // Resumo geral
-        const currentDay = new Date().getDate();
-        const geralAverage = totalGeral > 0 ? totalGeral / currentDay : 0;
-        const geralProjection = this.calculateMonthlyProjection(geralAverage, month, year);
-        
-        reportHtml = `
-            <div class="report-summary">
-                <div class="report-item">
-                    <div class="report-value">R$ ${this.formatCurrency(totalGeral)}</div>
-                    <div class="report-label">Total Geral</div>
-                </div>
-                <div class="report-item">
-                    <div class="report-value">R$ ${this.formatCurrency(geralAverage)}</div>
-                    <div class="report-label">Média Diária Geral</div>
-                </div>
-                <div class="report-item">
-                    <div class="report-value">R$ ${this.formatCurrency(geralProjection)}</div>
-                    <div class="report-label">Projeção Mensal Geral</div>
-                </div>
-            </div>
-            <hr style="margin: 2rem 0; border: 1px solid var(--gray-200);">
-        ` + reportHtml;
-        
-        container.innerHTML = reportHtml;
-    }
-
     generateSegmentReport(storeValue, month, year, container) {
         if (!storeValue) {
             container.innerHTML = '<p>Selecione um segmento/loja.</p>';
+            return;
+        }
+        
+        if (storeValue === 'all') {
+            this.generateAllSegmentsReport(month, year, container);
             return;
         }
         
@@ -1141,8 +1373,8 @@ class IceBeerManagement {
         const dailyAverage = totalDays > 0 ? total / totalDays : 0;
         const monthlyProjection = this.calculateMonthlyProjection(dailyAverage, month, year);
         
-        // Buscar meta
-        const goalKey = `${segment}-${month}-${year}`;
+        // Buscar meta específica da loja
+        const goalKey = `${segment}-${store}-${month}-${year}`;
         const goal = this.monthlyGoals[goalKey] || 0;
         const goalProgress = goal > 0 ? (total / goal * 100) : 0;
         
@@ -1183,6 +1415,128 @@ class IceBeerManagement {
         `;
     }
 
+    generateAllSegmentsReport(month, year, container) {
+        console.log(`Gerando relatório geral para ${month}/${year}`);
+        
+        // Calcular totais de todos os segmentos
+        const convTotal = this.calculateSegmentTotal('conveniences', month, year);
+        const petiTotal = this.calculateSegmentTotal('petiscarias', month, year);
+        const diskTotal = this.calculateSegmentTotal('diskChopp', month, year);
+        const totalGeral = convTotal + petiTotal + diskTotal;
+        
+        // Calcular dias transcorridos
+        const today = new Date();
+        const currentMonth = today.getMonth() + 1;
+        const currentYear = today.getFullYear();
+        
+        let daysElapsed;
+        if (year === currentYear && month === currentMonth) {
+            // Mês atual - usar dias transcorridos
+            daysElapsed = today.getDate();
+        } else {
+            // Mês passado - usar todos os dias do mês
+            daysElapsed = new Date(year, month, 0).getDate();
+        }
+        
+        const dailyAverage = daysElapsed > 0 ? totalGeral / daysElapsed : 0;
+        const daysInMonth = new Date(year, month, 0).getDate();
+        const monthlyProjection = dailyAverage * daysInMonth;
+        
+        // Buscar todas as entradas do período
+        const allEntries = [];
+        
+        // Conveniências
+        Object.entries(this.billingData.conveniences || {}).forEach(([store, storeData]) => {
+            storeData.filter(entry => this.isEntryInMonth(entry, month, year)).forEach(entry => {
+                allEntries.push({
+                    ...entry,
+                    storeName: this.getStoreName('conveniences', store)
+                });
+            });
+        });
+        
+        // Petiscarias
+        Object.entries(this.billingData.petiscarias || {}).forEach(([store, storeData]) => {
+            storeData.filter(entry => this.isEntryInMonth(entry, month, year)).forEach(entry => {
+                allEntries.push({
+                    ...entry,
+                    storeName: this.getStoreName('petiscarias', store)
+                });
+            });
+        });
+        
+        // Disk Chopp
+        (this.billingData.diskChopp || []).filter(entry => this.isEntryInMonth(entry, month, year)).forEach(entry => {
+            allEntries.push({
+                ...entry,
+                storeName: 'Disk Chopp - Delivery'
+            });
+        });
+        
+        // Ordenar por data
+        allEntries.sort((a, b) => new Date(b.createdAt || b.startDate) - new Date(a.createdAt || a.startDate));
+        
+        container.innerHTML = `
+            <h3>Relatório Geral - ${this.getMonthName(month)}/${year}</h3>
+            
+            <div class="report-summary">
+                <div class="report-item">
+                    <div class="report-value">R$ ${this.formatCurrency(totalGeral)}</div>
+                    <div class="report-label">Total Geral</div>
+                </div>
+                <div class="report-item">
+                    <div class="report-value">R$ ${this.formatCurrency(dailyAverage)}</div>
+                    <div class="report-label">Média Diária</div>
+                </div>
+                <div class="report-item">
+                    <div class="report-value">R$ ${this.formatCurrency(monthlyProjection)}</div>
+                    <div class="report-label">Projeção Mensal</div>
+                </div>
+                <div class="report-item">
+                    <div class="report-value">${daysElapsed}/${daysInMonth}</div>
+                    <div class="report-label">Dias Transcorridos</div>
+                </div>
+            </div>
+            
+            <div style="margin: 2rem 0;">
+                <h4 style="margin-bottom: 1rem;">Totais por Segmento</h4>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                    <div style="background: #f0f9ff; padding: 1.5rem; border-radius: 12px; text-align: center; border: 1px solid #bae6fd;">
+                        <div style="font-size: 1.5rem; font-weight: 700; color: #0ea5e9; margin-bottom: 0.5rem;">
+                            R$ ${this.formatCurrency(convTotal)}
+                        </div>
+                        <div style="color: #475569; font-weight: 600;">Conveniências</div>
+                    </div>
+                    <div style="background: #f0f9ff; padding: 1.5rem; border-radius: 12px; text-align: center; border: 1px solid #bae6fd;">
+                        <div style="font-size: 1.5rem; font-weight: 700; color: #0ea5e9; margin-bottom: 0.5rem;">
+                            R$ ${this.formatCurrency(petiTotal)}
+                        </div>
+                        <div style="color: #475569; font-weight: 600;">Petiscarias</div>
+                    </div>
+                    <div style="background: #f0f9ff; padding: 1.5rem; border-radius: 12px; text-align: center; border: 1px solid #bae6fd;">
+                        <div style="font-size: 1.5rem; font-weight: 700; color: #0ea5e9; margin-bottom: 0.5rem;">
+                            R$ ${this.formatCurrency(diskTotal)}
+                        </div>
+                        <div style="color: #475569; font-weight: 600;">Disk Chopp</div>
+                    </div>
+                </div>
+            </div>
+            
+            <h4 style="margin-top: 2rem; margin-bottom: 1rem;">Todos os Lançamentos do Período (${allEntries.length} registros)</h4>
+            <div class="billing-history" style="max-height: 400px; overflow-y: auto;">
+                ${allEntries.length > 0 ? allEntries.map(entry => `
+                    <div class="billing-item">
+                        <div class="billing-info">
+                            <div class="billing-amount">R$ ${this.formatCurrency(parseFloat(entry.amount) || 0)}</div>
+                            <div class="billing-period">${this.formatDate(entry.startDate)} a ${this.formatDate(entry.endDate)}</div>
+                            <div class="billing-store">${entry.storeName}${entry.description ? ` - ${entry.description}` : ''}</div>
+                        </div>
+                    </div>
+                `).join('') : '<p>Nenhum lançamento encontrado no período.</p>'}
+            </div>
+        `;
+    }
+
     // Metas
     saveGoal() {
         console.log('Salvando meta...');
@@ -1214,8 +1568,15 @@ class IceBeerManagement {
         
         try {
             const [year, month] = goalMonth.split('-').map(Number);
-            const [segment] = goalStore.split('-');
-            const goalKey = `${segment}-${month}-${year}`;
+            
+            // Para proprietário pode escolher qualquer loja, para gestores só suas lojas
+            let goalKey;
+            if (this.currentUser.segment === 'owner') {
+                goalKey = `${goalStore}-${month}-${year}`;
+            } else {
+                const [segment, store] = goalStore.split('-');
+                goalKey = `${segment}-${store}-${month}-${year}`;
+            }
             
             this.monthlyGoals[goalKey] = goalAmount;
             this.saveData('monthlyGoals', this.monthlyGoals);
@@ -1269,15 +1630,33 @@ class IceBeerManagement {
             }
             
             goalsList.innerHTML = relevantGoals.map(([key, goalAmount]) => {
-                const [goalSegment, month, year] = key.split('-');
-                const actualAmount = this.calculateSegmentTotal(goalSegment, parseInt(month), parseInt(year));
+                const keyParts = key.split('-');
+                let goalSegment, goalStore, month, year;
+                
+                if (keyParts.length === 4) {
+                    // Formato: segment-store-month-year
+                    [goalSegment, goalStore, month, year] = keyParts;
+                } else if (keyParts.length === 3) {
+                    // Formato antigo: segment-month-year (compatibilidade)
+                    [goalSegment, month, year] = keyParts;
+                    goalStore = 'geral';
+                }
+                
+                const actualAmount = goalStore === 'geral' 
+                    ? this.calculateSegmentTotal(goalSegment, parseInt(month), parseInt(year))
+                    : this.calculateStoreTotal(goalSegment, goalStore, parseInt(month), parseInt(year));
+                    
                 const progress = goalAmount > 0 ? (actualAmount / goalAmount * 100) : 0;
+                
+                const storeName = goalStore === 'geral' 
+                    ? this.getSegmentName(goalSegment)
+                    : this.getStoreName(goalSegment, goalStore);
                 
                 return `
                     <div class="goal-item">
                         <div class="goal-header">
                             <div class="goal-title">
-                                ${this.getSegmentName(goalSegment)} - ${this.getMonthName(parseInt(month))}/${year}
+                                ${storeName} - ${this.getMonthName(parseInt(month))}/${year}
                             </div>
                             <button class="btn-delete" onclick="app.deleteGoal('${key}')">🗑️</button>
                         </div>
@@ -1286,7 +1665,7 @@ class IceBeerManagement {
                         </div>
                         <div class="goal-stats">
                             <span>R$ ${this.formatCurrency(actualAmount)} / R$ ${this.formatCurrency(goalAmount)}</span>
-                            <span>${progress.toFixed(1)}%</span>
+                            <span class="${progress >= 100 ? 'goal-achieved' : progress >= 80 ? 'goal-warning' : 'goal-danger'}">${progress.toFixed(1)}%</span>
                         </div>
                     </div>
                 `;

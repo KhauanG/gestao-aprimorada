@@ -24,12 +24,12 @@ class RobustStorageManager {
         if (!this.compressionEnabled) return JSON.stringify(data);
         
         try {
-            const jsonStr = JSON.stringify(data);
+            const jsonString = JSON.stringify(data);
             const compressed = this.optimizeDataStructure(data);
             const compressedStr = JSON.stringify(compressed);
             
-            const reduction = ((1 - compressedStr.length/jsonStr.length) * 100).toFixed(1);
-            console.log(`💾 Compressão: ${jsonStr.length} → ${compressedStr.length} bytes (${reduction}% redução)`);
+            const reduction = ((1 - compressedStr.length/jsonString.length) * 100).toFixed(1);
+            console.log(`💾 Compressão: ${jsonString.length} → ${compressedStr.length} bytes (${reduction}% redução)`);
             
             return compressedStr;
         } catch (error) {

@@ -526,6 +526,107 @@ body {
     letter-spacing: 0.05em;
 }
 
+/* Goals Overview */
+.goal-overview-item {
+    background: var(--ice-blue);
+    padding: 1.5rem;
+    border-radius: 12px;
+    margin-bottom: 1rem;
+    border: 1px solid var(--lightest-blue);
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.goal-overview-item::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: linear-gradient(135deg, var(--accent-blue), var(--bright-blue));
+}
+
+.goal-overview-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(14, 165, 233, 0.15);
+}
+
+.goal-overview-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.goal-store-name {
+    font-weight: 700;
+    font-size: 1rem;
+    background: linear-gradient(135deg, var(--royal-blue), var(--dark-blue));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.goal-progress-text {
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--accent-blue);
+}
+
+.goal-overview-bar {
+    background: var(--gray-200);
+    height: 8px;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 0.75rem;
+    position: relative;
+}
+
+.goal-overview-fill {
+    background: linear-gradient(90deg, var(--success) 0%, var(--accent-blue) 100%);
+    height: 100%;
+    transition: width 0.5s ease;
+    border-radius: 4px;
+    position: relative;
+}
+
+.goal-overview-fill::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    animation: shimmer 2s infinite;
+}
+
+.goal-overview-values {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem;
+    color: var(--gray-700);
+    font-weight: 600;
+}
+
+/* Goal status colors */
+.goal-achieved {
+    color: var(--success) !important;
+    font-weight: 700;
+}
+
+.goal-warning {
+    color: var(--warning) !important;
+    font-weight: 700;
+}
+
+.goal-danger {
+    color: var(--error) !important;
+    font-weight: 700;
+}
+
 /* Forms */
 .billing-form,
 .reports-filters,
@@ -646,7 +747,8 @@ body {
 }
 
 .btn-edit,
-.btn-delete {
+.btn-delete,
+.btn-report {
     background: none;
     border: none;
     padding: 0.75rem;
@@ -654,6 +756,17 @@ body {
     cursor: pointer;
     transition: all 0.3s ease;
     font-size: 1.1rem;
+}
+
+.btn-report {
+    color: var(--accent-blue);
+    background: rgba(14, 165, 233, 0.1);
+}
+
+.btn-report:hover {
+    background: var(--accent-blue);
+    color: var(--white);
+    transform: scale(1.1);
 }
 
 .btn-edit {
@@ -1193,8 +1306,27 @@ body {
     .stat-item,
     .report-item,
     .billing-item,
-    .goal-item {
+    .goal-item,
+    .goal-overview-item {
         padding: 1.5rem;
+    }
+    
+    .billing-actions {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+    
+    .btn-edit,
+    .btn-delete,
+    .btn-report {
+        padding: 0.5rem;
+        font-size: 1rem;
+    }
+    
+    .goal-overview-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
     }
 }
 
