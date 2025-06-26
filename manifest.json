@@ -1,0 +1,129 @@
+{
+  "name": "Ice Beer - Sistema de Gestão de Faturamento",
+  "short_name": "Ice Beer",
+  "description": "Sistema completo de gestão de faturamento para a empresa Ice Beer com múltiplos segmentos e relatórios inteligentes",
+  "version": "1.0.0",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "theme_color": "#1e40af",
+  "background_color": "#ffffff",
+  "lang": "pt-BR",
+  "scope": "/",
+  "categories": ["business", "finance", "productivity"],
+  "dir": "ltr",
+  
+  "icons": [
+    {
+      "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNzIiIGhlaWdodD0iNzIiIHZpZXdCb3g9IjAgMCA3MiA3MiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjcyIiBoZWlnaHQ9IjcyIiByeD0iMTYiIGZpbGw9IiMxZTQwYWYiLz4KPHR5cGUgc3R5bGU9ImZvbnQtc2l6ZTogNDBweDsgZm9udC1mYW1pbHk6IEFwcGxlIENvbG9yIEVtb2ppLCAnU2Vnb2UgVUkgRW1vamknLCAnTm90byBDb2xvciBFbW9qaScsICdBbmRyb2lkIEVtb2ppJywgRW1vaWlTeW1ib2xzOyB0ZXh0LWFsaWduOiBjZW50ZXI7IGxpbmUtaGVpZ2h0OiA3MnB4OyI+4p2E77iPPC90ZXh0Pgo8L3N2Zz4K",
+      "sizes": "72x72",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iOTYiIGhlaWdodD0iOTYiIHZpZXdCb3g9IjAgMCA5NiA5NiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9Ijk2IiBoZWlnaHQ9Ijk2IiByeD0iMjAiIGZpbGw9IiMxZTQwYWYiLz4KPHR5cGUgc3R5bGU9ImZvbnQtc2l6ZTogNTJweDsgZm9udC1mYW1pbHk6IEFwcGxlIENvbG9yIEVtb2ppLCAnU2Vnb2UgVUkgRW1vamknLCAnTm90byBDb2xvciBFbW9qaScsICdBbmRyb2lkIEVtb2ppJywgRW1vaWlTeW1ib2xzOyB0ZXh0LWFsaWduOiBjZW50ZXI7IGxpbmUtaGVpZ2h0OiA5NnB4OyI+4p2E77iPPC90ZXh0Pgo8L3N2Zz4K",
+      "sizes": "96x96",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTI4IiBoZWlnaHQ9IjEyOCIgdmlld0JveD0iMCAwIDEyOCAxMjgiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxMjgiIGhlaWdodD0iMTI4IiByeD0iMjgiIGZpbGw9IiMxZTQwYWYiLz4KPHR5cGUgc3R5bGU9ImZvbnQtc2l6ZTogNzJweDsgZm9udC1mYW1pbHk6IEFwcGxlIENvbG9yIEVtb2ppLCAnU2Vnb2UgVUkgRW1vamknLCAnTm90byBDb2xvciBFbW9qaScsICdBbmRyb2lkIEVtb2ppJywgRW1vaWlTeW1ib2xzOyB0ZXh0LWFsaWduOiBjZW50ZXI7IGxpbmUtaGVpZ2h0OiAxMjhweDsiPuKdhO+4jzwvdGV4dD4KPC9zdmc+Cg==",
+      "sizes": "128x128",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTQ0IiBoZWlnaHQ9IjE0NCIgdmlld0JveD0iMCAwIDE0NCAxNDQiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxNDQiIGhlaWdodD0iMTQ0IiByeD0iMzIiIGZpbGw9IiMxZTQwYWYiLz4KPHR5cGUgc3R5bGU9ImZvbnQtc2l6ZTogODBweDsgZm9udC1mYW1pbHk6IEFwcGxlIENvbG9yIEVtb2ppLCAnU2Vnb2UgVUkgRW1vamknLCAnTm90byBDb2xvciBFbW9qaScsICdBbmRyb2lkIEVtb2ppJywgRW1vaWlTeW1ib2xzOyB0ZXh0LWFsaWduOiBjZW50ZXI7IGxpbmUtaGVpZ2h0OiAxNDRweDsiPuKdhO+4jzwvdGV4dD4KPC9zdmc+Cg==",
+      "sizes": "144x144",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgdmlld0JveD0iMCAwIDE5MiAxOTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxOTIiIGhlaWdodD0iMTkyIiByeD0iNDAiIGZpbGw9IiMxZTQwYWYiLz4KPHR5cGUgc3R5bGU9ImZvbnQtc2l6ZTogMTA4cHg7IGZvbnQtZmFtaWx5OiBBcHBsZSBDb2xvciBFbW9qaSwgJ1NlZ29lIFVJIEVtb2ppJywgJ05vdG8gQ29sb3IgRW1vamknLCAnQW5kcm9pZCBFbW9qaScsIEVtb2ppU3ltYm9sczsgdGV4dC1hbGlnbjogY2VudGVyOyBsaW5lLWhlaWdodDogMTkycHg7Ij7inYTvuI88L3RleHQ+Cjwvc3ZnPgo=",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgdmlld0JveD0iMCAwIDUxMiA1MTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI1MTIiIGhlaWdodD0iNTEyIiByeD0iMTA0IiBmaWxsPSIjMWU0MGFmIi8+Cjx0ZXh0IHg9IjI1NiIgeT0iMjU2IiBzdHlsZT0iZm9udC1zaXplOiAyODBweDsgZm9udC1mYW1pbHk6IEFwcGxlIENvbG9yIEVtb2ppLCAnU2Vnb2UgVUkgRW1vamknLCAnTm90byBDb2xvciBFbW9qaScsICdBbmRyb2lkIEVtb2ppJywgRW1vaWlTeW1ib2xzOyB0ZXh0LWFuY2hvcjogbWlkZGxlOyBkb21pbmFudC1iYXNlbGluZTogY2VudHJhbDsiPuKdhO+4jzwvdGV4dD4KPC9zdmc+Cg==",
+      "sizes": "512x512",
+      "type": "image/svg+xml"
+    }
+  ],
+  
+  "shortcuts": [
+    {
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "description": "Acessar dashboard principal",
+      "url": "/?shortcut=dashboard",
+      "icons": [
+        {
+          "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iOTYiIGhlaWdodD0iOTYiIHZpZXdCb3g9IjAgMCA5NiA5NiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9Ijk2IiBoZWlnaHQ9Ijk2IiByeD0iMjAiIGZpbGw9IiMzYjgyZjYiLz4KPHR5cGUgc3R5bGU9ImZvbnQtc2l6ZTogNDhweDsgZm9udC1mYW1pbHk6ICdTZWdvZSBVSScsIFRhaG9tYSwgR2VuZXZhLCBWZXJkYW5hLCBzYW5zLXNlcmlmOyB0ZXh0LWFsaWduOiBjZW50ZXI7IGxpbmUtaGVpZ2h0OiA5NnB4OyBjb2xvcjogd2hpdGU7Ij7wn5OKPC90ZXh0Pgo8L3N2Zz4K",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Novo Lançamento",
+      "short_name": "Lançamento",
+      "description": "Fazer novo lançamento de faturamento",
+      "url": "/?shortcut=billing",
+      "icons": [
+        {
+          "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iOTYiIGhlaWdodD0iOTYiIHZpZXdCb3g9IjAgMCA5NiA5NiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9Ijk2IiBoZWlnaHQ9Ijk2IiByeD0iMjAiIGZpbGw9IiMxMGI5ODEiLz4KPHR5cGUgc3R5bGU9ImZvbnQtc2l6ZTogNDhweDsgZm9udC1mYW1pbHk6ICdTZWdvZSBVSScsIFRhaG9tYSwgR2VuZXZhLCBWZXJkYW5hLCBzYW5zLXNlcmlmOyB0ZXh0LWFsaWduOiBjZW50ZXI7IGxpbmUtaGVpZ2h0OiA5NnB4OyBjb2xvcjogd2hpdGU7Ij7wn5KwPC90ZXh0Pgo8L3N2Zz4K",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Relatórios",
+      "short_name": "Relatórios",
+      "description": "Visualizar relatórios de faturamento",
+      "url": "/?shortcut=reports",
+      "icons": [
+        {
+          "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iOTYiIGhlaWdodD0iOTYiIHZpZXdCb3g9IjAgMCA5NiA5NiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9Ijk2IiBoZWlnaHQ9Ijk2IiByeD0iMjAiIGZpbGw9IiNmNTllMGIiLz4KPHR5cGUgc3R5bGU9ImZvbnQtc2l6ZTogNDhweDsgZm9udC1mYW1pbHk6ICdTZWdvZSBVSScsIFRhaG9tYSwgR2VuZXZhLCBWZXJkYW5hLCBzYW5zLXNlcmlmOyB0ZXh0LWFsaWduOiBjZW50ZXI7IGxpbmUtaGVpZ2h0OiA5NnB4OyBjb2xvcjogd2hpdGU7Ij7wn5OHPC90ZXh0Pgo8L3N2Zz4K",
+          "sizes": "96x96"
+        }
+      ]
+    }
+  ],
+  
+  "screenshots": [
+    {
+      "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQwIiBoZWlnaHQ9IjMyMCIgdmlld0JveD0iMCAwIDI0MCAzMjAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyNDAiIGhlaWdodD0iMzIwIiBmaWxsPSIjZjNmNGY2Ii8+CjxyZWN0IHg9IjIwIiB5PSIyMCIgd2lkdGg9IjIwMCIgaGVpZ2h0PSI2MCIgcng9IjEwIiBmaWxsPSIjMWU0MGFmIi8+Cjx0ZXh0IHg9IjEyMCIgeT0iNTUiIHN0eWxlPSJmb250LXNpemU6IDI0cHg7IGZvbnQtZmFtaWx5OiAnU2Vnb2UgVUknLCBzYW5zLXNlcmlmOyB0ZXh0LWFuY2hvcjogbWlkZGxlOyBmaWxsOiB3aGl0ZTsgZm9udC13ZWlnaHQ6IGJvbGQ7Ij5JY2UgQmVlcjwvdGV4dD4KPHJlY3QgeD0iMjAiIHk9IjEwMCIgd2lkdGg9IjIwMCIgaGVpZ2h0PSIxMDAiIHJ4PSIxMCIgZmlsbD0iI2RiZWFmZSIvPgo8dGV4dCB4PSIxMjAiIHk9IjEzNSIgc3R5bGU9ImZvbnQtc2l6ZTogMTZweDsgZm9udC1mYW1pbHk6ICdTZWdvZSBVSScsIHNhbnMtc2VyaWY7IHRleHQtYW5jaG9yOiBtaWRkbGU7IGZpbGw6ICMxZTQwYWY7IGZvbnQtd2VpZ2h0OiBib2xkOyI+RGFzaGJvYXJkPC90ZXh0Pgo8dGV4dCB4PSIxMjAiIHk9IjE2NSIgc3R5bGU9ImZvbnQtc2l6ZTogMTJweDsgZm9udC1mYW1pbHk6ICdTZWdvZSBVSScsIHNhbnMtc2VyaWY7IHRleHQtYW5jaG9yOiBtaWRkbGU7IGZpbGw6ICM0YjU1NjM7Ij5WaXN1YWxpemFyIGVzdGF0w61zdGljYXM8L3RleHQ+Cjx0ZXh0IHg9IjEyMCIgeT0iMTgwIiBzdHlsZT0iZm9udC1zaXplOiAxMnB4OyBmb250LWZhbWlseTogJ1NlZ29lIFVJJywgc2Fucy1zZXJpZjsgdGV4dC1hbmNob3I6IG1pZGRsZTsgZmlsbDogIzRiNTU2Mzsi+WUgcmVsYXTDs3Jpb3MgZGUgZmF0dXJhbWVudG88L3RleHQ+Cjwvc3ZnPgo=",
+      "sizes": "240x320",
+      "type": "image/svg+xml",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQwIiBoZWlnaHQ9IjQwMCIgdmlld0JveD0iMCAwIDY0MCA0MDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI2NDAiIGhlaWdodD0iNDAwIiBmaWxsPSIjZjNmNGY2Ii8+CjxyZWN0IHg9IjQwIiB5PSI0MCIgd2lkdGg9IjU2MCIgaGVpZ2h0PSI4MCIgcng9IjE1IiBmaWxsPSIjMWU0MGFmIi8+Cjx0ZXh0IHg9IjMyMCIgeT0iOTAiIHN0eWxlPSJmb250LXNpemU6IDM2cHg7IGZvbnQtZmFtaWx5OiAnU2Vnb2UgVUknLCBzYW5zLXNlcmlmOyB0ZXh0LWFuY2hvcjogbWlkZGxlOyBmaWxsOiB3aGl0ZTsgZm9udC13ZWlnaHQ6IGJvbGQ7Ij5JY2UgQmVlciAtIFNpc3RlbWEgZGUgR2VzdMOjbzwvdGV4dD4KPHJlY3QgeD0iNDAiIHk9IjE2MCIgd2lkdGg9IjE2MCIgaGVpZ2h0PSIxODAiIHJ4PSIxNSIgZmlsbD0iI2RiZWFmZSIvPgo8dGV4dCB4PSIxMjAiIHk9IjIwMCIgc3R5bGU9ImZvbnQtc2l6ZTogMjBweDsgZm9udC1mYW1pbHk6ICdTZWdvZSBVSScsIHNhbnMtc2VyaWY7IHRleHQtYW5jaG9yOiBtaWRkbGU7IGZpbGw6ICMxZTQwYWY7IGZvbnQtd2VpZ2h0OiBib2xkOyI+RmF0dXJhbWVudG88L3RleHQ+CjxyZWN0IHg9IjI0MCIgeT0iMTYwIiB3aWR0aD0iMTYwIiBoZWlnaHQ9IjE4MCIgcng9IjE1IiBmaWxsPSIjZGJlYWZlIi8+Cjx0ZXh0IHg9IjMyMCIgeT0iMjAwIiBzdHlsZT0iZm9udC1zaXplOiAyMHB4OyBmb250LWZhbWlseTogJ1NlZ29lIFVJJywgc2Fucy1zZXJpZjsgdGV4dC1hbmNob3I6IG1pZGRsZTsgZmlsbDogIzFlNDBhZjsgZm9udC13ZWlnaHQ6IGJvbGQ7Ij5SZWxhdMOzcmlvczwvdGV4dD4KPHJlY3QgeD0iNDQwIiB5PSIxNjAiIHdpZHRoPSIxNjAiIGhlaWdodD0iMTgwIiByeD0iMTUiIGZpbGw9IiNkYmVhZmUiLz4KPHR5cGUgeD0iNTIwIiB5PSIyMDAiIHN0eWxlPSJmb250LXNpemU6IDIwcHg7IGZvbnQtZmFtaWx5OiAnU2Vnb2UgVUknLCBzYW5zLXNlcmlmOyB0ZXh0LWFuY2hvcjogbWlkZGxlOyBmaWxsOiAjMWU0MGFmOyBmb250LXdlaWdodDogYm9sZDsiPk1ldGFzPC90ZXh0Pgo8L3N2Zz4K",
+      "sizes": "640x400",
+      "type": "image/svg+xml",
+      "form_factor": "wide"
+    }
+  ],
+  
+  "prefer_related_applications": false,
+  
+  "related_applications": [],
+  
+  "edge_side_panel": {
+    "preferred_width": 480
+  },
+  
+  "launch_handler": {
+    "client_mode": "focus-existing"
+  },
+  
+  "protocol_handlers": [],
+  
+  "file_handlers": [],
+  
+  "share_target": {
+    "action": "/",
+    "method": "GET",
+    "enctype": "application/x-www-form-urlencoded",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  }
+}

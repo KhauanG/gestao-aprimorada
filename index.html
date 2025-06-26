@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ice Beer - Sistema de Gestão de Faturamento</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0f172a">
+    <meta name="description" content="Sistema de Gestão de Faturamento Ice Beer">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Ice Beer">
+</head>
+<body>
+    <!-- Tela de Login -->
+    <div id="loginScreen" class="screen active">
+        <div class="login-container">
+            <div class="logo-container">
+                <div class="logo">❄️</div>
+                <h1>Ice Beer</h1>
+                <p>Sistema de Gestão de Faturamento</p>
+            </div>
+            
+            <form id="loginForm" class="login-form">
+                <div class="form-group">
+                    <label for="username">Usuário:</label>
+                    <input type="text" id="username" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">Senha:</label>
+                    <input type="password" id="password" required>
+                </div>
+                
+                <button type="submit" class="btn-primary">Entrar</button>
+            </form>
+            
+            <div class="login-info">
+                <h3>Credenciais de Acesso:</h3>
+                <p><strong>Conveniências:</strong> conv / 123</p>
+                <p><strong>Petiscarias:</strong> peti / 123</p>
+                <p><strong>Disk Chopp:</strong> disk / 123</p>
+                <p><strong>Proprietário:</strong> dono / 123</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dashboard Principal -->
+    <div id="dashboardScreen" class="screen">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="header-left">
+                    <div class="logo">❄️</div>
+                    <div class="header-info">
+                        <h1>Ice Beer</h1>
+                        <span id="userInfo">Bem-vindo!</span>
+                    </div>
+                </div>
+                
+                <div class="header-right">
+                    <div class="current-date" id="currentDate"></div>
+                    <button id="logoutBtn" class="btn-secondary">
+                        <span>Sair</span>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Navigation -->
+        <nav class="navigation" id="navigation">
+            <button class="nav-btn active" data-section="dashboard">
+                <span>📊</span>
+                Dashboard
+            </button>
+            <button class="nav-btn" data-section="billing" id="billingNav">
+                <span>💰</span>
+                Faturamento
+            </button>
+            <button class="nav-btn" data-section="reports">
+                <span>📈</span>
+                Relatórios
+            </button>
+            <button class="nav-btn" data-section="goals">
+                <span>🎯</span>
+                Metas
+            </button>
+        </nav>
+
+        <!-- Conteúdo Principal -->
+        <main class="main-content">
+            <!-- Dashboard Section -->
+            <section id="dashboardSection" class="content-section active">
+                <div class="dashboard-grid">
+                    <div class="card">
+                        <h3>Resumo Geral</h3>
+                        <div class="summary-stats" id="summaryStats">
+                            <!-- Será preenchido dinamicamente -->
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <h3>Gráfico de Vendas</h3>
+                        <canvas id="salesChart" width="400" height="200"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Billing Section -->
+            <section id="billingSection" class="content-section">
+                <div class="billing-container">
+                    <h2>Lançamento de Faturamento</h2>
+                    
+                    <form id="billingForm" class="billing-form">
+                        <div class="form-row">
+                            <div class="form-group" id="storeSelectGroup">
+                                <label for="storeSelect">Loja:</label>
+                                <select id="storeSelect" required>
+                                    <!-- Será preenchido dinamicamente -->
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="startDate">Data Início:</label>
+                                <input type="date" id="startDate" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="endDate">Data Fim:</label>
+                                <input type="date" id="endDate" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="amount">Valor (R$):</label>
+                                <input type="number" id="amount" step="0.01" min="0" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="description">Observações:</label>
+                                <input type="text" id="description" placeholder="Observações opcionais">
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="btn-primary">Lançar Faturamento</button>
+                    </form>
+                    
+                    <div class="billing-history">
+                        <h3>Histórico de Lançamentos</h3>
+                        <div id="billingHistory">
+                            <!-- Será preenchido dinamicamente -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Reports Section -->
+            <section id="reportsSection" class="content-section">
+                <div class="reports-container">
+                    <h2>Relatórios de Faturamento</h2>
+                    
+                    <div class="reports-filters">
+                        <div class="form-row">
+                            <div class="form-group" id="reportStoreGroup">
+                                <label for="reportStore">Segmento/Loja:</label>
+                                <select id="reportStore">
+                                    <!-- Será preenchido dinamicamente -->
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="reportMonth">Mês/Ano:</label>
+                                <input type="month" id="reportMonth">
+                            </div>
+                            
+                            <button id="generateReport" class="btn-primary">Gerar Relatório</button>
+                        </div>
+                    </div>
+                    
+                    <div id="reportResults" class="report-results">
+                        <!-- Será preenchido dinamicamente -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Goals Section -->
+            <section id="goalsSection" class="content-section">
+                <div class="goals-container">
+                    <h2>Gestão de Metas</h2>
+                    
+                    <div class="goals-form">
+                        <div class="form-row">
+                            <div class="form-group" id="goalStoreGroup">
+                                <label for="goalStore">Segmento/Loja:</label>
+                                <select id="goalStore">
+                                    <!-- Será preenchido dinamicamente -->
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="goalMonth">Mês/Ano:</label>
+                                <input type="month" id="goalMonth">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="goalAmount">Meta (R$):</label>
+                                <input type="number" id="goalAmount" step="0.01" min="0">
+                            </div>
+                            
+                            <button id="saveGoal" class="btn-primary">Salvar Meta</button>
+                        </div>
+                    </div>
+                    
+                    <div id="goalsList" class="goals-list">
+                        <!-- Será preenchido dinamicamente -->
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Modal de Edição -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Editar Lançamento</h3>
+                <button id="closeModal" class="close-btn">&times;</button>
+            </div>
+            
+            <form id="editForm">
+                <div class="form-group">
+                    <label for="editStartDate">Data Início:</label>
+                    <input type="date" id="editStartDate" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="editEndDate">Data Fim:</label>
+                    <input type="date" id="editEndDate" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="editAmount">Valor (R$):</label>
+                    <input type="number" id="editAmount" step="0.01" min="0" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="editDescription">Observações:</label>
+                    <input type="text" id="editDescription">
+                </div>
+                
+                <div class="modal-actions">
+                    <button type="button" id="cancelEdit" class="btn-secondary">Cancelar</button>
+                    <button type="submit" class="btn-primary">Salvar Alterações</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Loading Spinner -->
+    <div id="loadingSpinner" class="loading-spinner">
+        <div class="spinner">❄️</div>
+        <p>Carregando...</p>
+    </div>
+
+    <!-- Notifications -->
+    <div id="notifications" class="notifications-container"></div>
+
+    <!-- Scripts -->
+    <script src="storage.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
