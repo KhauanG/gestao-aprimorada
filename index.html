@@ -14,27 +14,59 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Ice Beer">
-    
-    <!-- ORDEM CORRIGIDA: Firebase SDKs PRIMEIRO -->
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-    
-    <!-- DEPOIS: Configuração Firebase -->
-    <script src="firebase-config.js"></script>
 </head>
 <body>
-    <!-- Indicador de Carregamento -->
-    <div id="firebaseLoader" style="
+    <!-- ✅ LOADER PRINCIPAL APRIMORADO -->
+    <div id="mainLoader" style="
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
         background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
-        display: flex; align-items: center; justify-content: center; z-index: 9999;
+        display: flex; align-items: center; justify-content: center; z-index: 10000;
         color: white; font-family: 'Inter', sans-serif;
     ">
-        <div style="text-align: center;">
-            <div style="font-size: 4rem; margin-bottom: 1rem; animation: spin 2s linear infinite;">❄️</div>
-            <h2 style="margin: 0; font-weight: 600;">Conectando ao Firebase...</h2>
-            <p style="margin: 0.5rem 0 0; opacity: 0.8;">Aguarde um momento</p>
+        <div style="text-align: center; max-width: 500px; padding: 2rem;">
+            <div id="mainLoaderIcon" style="font-size: 5rem; margin-bottom: 2rem; animation: spin 2s linear infinite;">❄️</div>
+            <h1 id="mainLoaderTitle" style="margin: 0 0 1rem 0; font-weight: 700; font-size: 2rem;">Ice Beer</h1>
+            <h2 id="mainLoaderSubtitle" style="margin: 0 0 2rem 0; font-weight: 500; font-size: 1.2rem; opacity: 0.9;">Inicializando Sistema...</h2>
+            
+            <!-- Barra de Progresso -->
+            <div style="width: 400px; max-width: 100%; margin: 0 auto 1.5rem;">
+                <div style="background: rgba(255,255,255,0.1); height: 6px; border-radius: 3px; overflow: hidden;">
+                    <div id="mainProgress" style="
+                        width: 0%; height: 100%; 
+                        background: linear-gradient(90deg, #0ea5e9, #38bdf8, #60a5fa); 
+                        transition: width 0.5s ease; border-radius: 3px;
+                        box-shadow: 0 0 10px rgba(14, 165, 233, 0.5);
+                    "></div>
+                </div>
+            </div>
+            
+            <!-- Status -->
+            <p id="mainLoaderStatus" style="margin: 0 0 1rem 0; font-size: 1rem; opacity: 0.8;">Carregando recursos...</p>
+            <p id="mainLoaderPercent" style="margin: 0; font-size: 0.9rem; opacity: 0.6;">0%</p>
+            
+            <!-- Steps -->
+            <div id="loadingSteps" style="margin-top: 2rem; text-align: left; max-width: 300px; margin-left: auto; margin-right: auto;">
+                <div class="step" data-step="1">
+                    <span class="step-icon">⏳</span>
+                    <span class="step-text">Carregando Firebase SDK...</span>
+                </div>
+                <div class="step" data-step="2">
+                    <span class="step-icon">⏳</span>
+                    <span class="step-text">Conectando ao Firebase...</span>
+                </div>
+                <div class="step" data-step="3">
+                    <span class="step-icon">⏳</span>
+                    <span class="step-text">Inicializando serviços...</span>
+                </div>
+                <div class="step" data-step="4">
+                    <span class="step-icon">⏳</span>
+                    <span class="step-text">Carregando aplicação...</span>
+                </div>
+                <div class="step" data-step="5">
+                    <span class="step-icon">⏳</span>
+                    <span class="step-text">Finalizando...</span>
+                </div>
+            </div>
         </div>
     </div>
     
@@ -42,6 +74,27 @@
         @keyframes spin {
             from { transform: rotate(0deg); }
             to { transform: rotate(360deg); }
+        }
+        
+        .step {
+            display: flex; align-items: center; margin: 0.5rem 0;
+            font-size: 0.9rem; opacity: 0.6; transition: all 0.3s ease;
+        }
+        
+        .step.active {
+            opacity: 1; color: #60a5fa;
+        }
+        
+        .step.completed {
+            opacity: 1; color: #10b981;
+        }
+        
+        .step-icon {
+            margin-right: 0.75rem; width: 1.2rem; text-align: center;
+        }
+        
+        .step-text {
+            flex: 1;
         }
     </style>
 
@@ -57,12 +110,12 @@
             <form id="loginForm" class="login-form">
                 <div class="form-group">
                     <label for="username">Usuário:</label>
-                    <input type="text" id="username" required>
+                    <input type="text" id="username" required autocomplete="username" placeholder="Digite seu usuário">
                 </div>
                 
                 <div class="form-group">
                     <label for="password">Senha:</label>
-                    <input type="password" id="password" required>
+                    <input type="password" id="password" required autocomplete="current-password" placeholder="Digite sua senha">
                 </div>
                 
                 <button type="submit" class="btn-primary">Entrar</button>
@@ -70,10 +123,26 @@
             
             <div class="login-info">
                 <h3>Credenciais de Acesso:</h3>
-                <p><strong>Conveniências:</strong> conv / 123</p>
-                <p><strong>Petiscarias:</strong> peti / 123</p>
-                <p><strong>Disk Chopp:</strong> disk / 123</p>
-                <p><strong>Proprietário:</strong> dono / 123</p>
+                <p><strong>Conveniências:</strong> conv / conv123</p>
+                <p><strong>Petiscarias:</strong> peti / peti123</p>
+                <p><strong>Disk Chopp:</strong> disk / disk123</p>
+                <p><strong>Proprietário:</strong> dono / dono123</p>
+                
+                <!-- Botões de teste rápido -->
+                <div style="margin-top: 1.5rem; display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem;">
+                    <button type="button" onclick="quickLogin('conv', 'conv123')" class="quick-login-btn">
+                        🏪 Conv
+                    </button>
+                    <button type="button" onclick="quickLogin('peti', 'peti123')" class="quick-login-btn">
+                        🍻 Peti
+                    </button>
+                    <button type="button" onclick="quickLogin('disk', 'disk123')" class="quick-login-btn">
+                        🚚 Disk
+                    </button>
+                    <button type="button" onclick="quickLogin('dono', 'dono123')" class="quick-login-btn">
+                        👑 Dono
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -93,6 +162,16 @@
                 
                 <div class="header-right">
                     <div class="current-date" id="currentDate"></div>
+                    <!-- Status Firebase -->
+                    <div id="firebaseStatus" title="Clique para ver status detalhado" style="
+                        padding: 0.5rem 1rem; margin-right: 0.5rem; border-radius: 10px; 
+                        background: rgba(255,255,255,0.1); color: white; font-size: 0.85rem;
+                        display: flex; align-items: center; gap: 0.5rem; cursor: pointer;
+                        border: 1px solid rgba(255,255,255,0.2); transition: all 0.3s ease;
+                    " onclick="window.checkFirebaseStatus && window.checkFirebaseStatus()">
+                        <span id="firebaseStatusIcon">🔗</span>
+                        <span id="firebaseStatusText">Firebase</span>
+                    </div>
                     <button id="logoutBtn" class="btn-secondary">
                         <span>Sair</span>
                     </button>
@@ -128,14 +207,17 @@
                     <div class="card">
                         <h3>Resumo Geral</h3>
                         <div class="summary-stats" id="summaryStats">
-                            <!-- Será preenchido dinamicamente -->
+                            <div class="stat-item">
+                                <div class="stat-value">Carregando...</div>
+                                <div class="stat-label">Aguarde</div>
+                            </div>
                         </div>
                     </div>
                     
                     <div class="card">
                         <h3>Metas do Mês</h3>
                         <div id="goalsOverview">
-                            <!-- Será preenchido dinamicamente -->
+                            <p>Carregando metas...</p>
                         </div>
                     </div>
                 </div>
@@ -151,7 +233,7 @@
                             <div class="form-group" id="storeSelectGroup">
                                 <label for="storeSelect">Loja:</label>
                                 <select id="storeSelect" required>
-                                    <!-- Será preenchido dinamicamente -->
+                                    <option value="">Selecione uma loja</option>
                                 </select>
                             </div>
                             
@@ -169,7 +251,7 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="amount">Valor (R$):</label>
-                                <input type="number" id="amount" step="0.01" min="0" required>
+                                <input type="number" id="amount" step="0.01" min="0" required placeholder="0,00">
                             </div>
                             
                             <div class="form-group">
@@ -184,7 +266,7 @@
                     <div class="billing-history">
                         <h3>Histórico de Lançamentos</h3>
                         <div id="billingHistory">
-                            <!-- Será preenchido dinamicamente -->
+                            <p>Carregando histórico...</p>
                         </div>
                     </div>
                 </div>
@@ -200,7 +282,7 @@
                             <div class="form-group" id="reportStoreGroup">
                                 <label for="reportStore">Segmento/Loja:</label>
                                 <select id="reportStore">
-                                    <!-- Será preenchido dinamicamente -->
+                                    <option value="">Selecione</option>
                                 </select>
                             </div>
                             
@@ -214,7 +296,7 @@
                     </div>
                     
                     <div id="reportResults" class="report-results">
-                        <!-- Será preenchido dinamicamente -->
+                        <p>Selecione os filtros e clique em "Gerar Relatório"</p>
                     </div>
                 </div>
             </section>
@@ -229,7 +311,7 @@
                             <div class="form-group" id="goalStoreGroup">
                                 <label for="goalStore">Segmento/Loja:</label>
                                 <select id="goalStore">
-                                    <!-- Será preenchido dinamicamente -->
+                                    <option value="">Selecione</option>
                                 </select>
                             </div>
                             
@@ -240,7 +322,7 @@
                             
                             <div class="form-group">
                                 <label for="goalAmount">Meta (R$):</label>
-                                <input type="number" id="goalAmount" step="0.01" min="0">
+                                <input type="number" id="goalAmount" step="0.01" min="0" placeholder="0,00">
                             </div>
                             
                             <button id="saveGoal" class="btn-primary">Salvar Meta</button>
@@ -248,7 +330,7 @@
                     </div>
                     
                     <div id="goalsList" class="goals-list">
-                        <!-- Será preenchido dinamicamente -->
+                        <p>Carregando metas...</p>
                     </div>
                 </div>
             </section>
@@ -295,82 +377,420 @@
     <!-- Loading Spinner -->
     <div id="loadingSpinner" class="loading-spinner">
         <div class="spinner">❄️</div>
-        <p>Carregando...</p>
+        <p>Processando...</p>
     </div>
 
     <!-- Notifications -->
     <div id="notifications" class="notifications-container"></div>
 
-    <!-- Scripts em ORDEM CORRETA -->
+    <!-- CSS adicional para botões de login rápido -->
+    <style>
+        .quick-login-btn {
+            padding: 0.75rem 1rem;
+            font-size: 0.9rem;
+            background: rgba(14, 165, 233, 0.1);
+            border: 2px solid rgba(14, 165, 233, 0.3);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            color: #1e40af;
+        }
+        
+        .quick-login-btn:hover {
+            background: rgba(14, 165, 233, 0.2);
+            border-color: rgba(14, 165, 233, 0.5);
+            transform: translateY(-1px);
+        }
+        
+        #firebaseStatus:hover {
+            background: rgba(255,255,255,0.2) !important;
+            transform: translateY(-1px);
+        }
+    </style>
+
+    <!-- ✅ SISTEMA DE CARREGAMENTO SEQUENCIAL ROBUSTO -->
     <script>
-        // Aguardar Firebase estar completamente carregado
-        window.addEventListener('DOMContentLoaded', async () => {
-            console.log('🔄 DOM carregado, aguardando Firebase...');
+        // ✅ SISTEMA DE LOADING ROBUSTO
+        const LoadingManager = {
+            currentStep: 0,
+            totalSteps: 5,
             
-            // Aguardar Firebase estar disponível
-            let attempts = 0;
-            while ((!window.firebaseApp || !window.firebaseAuth || !window.firebaseDb) && attempts < 100) {
-                await new Promise(resolve => setTimeout(resolve, 100));
-                attempts++;
-            }
+            steps: [
+                { id: 1, text: 'Carregando Firebase SDK...', progress: 20 },
+                { id: 2, text: 'Conectando ao Firebase...', progress: 40 },
+                { id: 3, text: 'Inicializando serviços...', progress: 60 },
+                { id: 4, text: 'Carregando aplicação...', progress: 80 },
+                { id: 5, text: 'Sistema pronto!', progress: 100 }
+            ],
             
-            if (window.firebaseApp && window.firebaseAuth && window.firebaseDb) {
-                console.log('✅ Firebase carregado, iniciando scripts...');
+            updateProgress(step, customText = null) {
+                this.currentStep = step;
+                const stepData = this.steps[step - 1];
                 
-                // Remover loader
-                const loader = document.getElementById('firebaseLoader');
-                if (loader) {
-                    loader.style.display = 'none';
+                if (!stepData) return;
+                
+                const progress = stepData.progress;
+                const text = customText || stepData.text;
+                
+                // Atualizar barra de progresso
+                const progressBar = document.getElementById('mainProgress');
+                if (progressBar) {
+                    progressBar.style.width = progress + '%';
                 }
                 
-                // Mostrar tela de login
+                // Atualizar texto
+                const statusEl = document.getElementById('mainLoaderStatus');
+                if (statusEl) {
+                    statusEl.textContent = text;
+                }
+                
+                // Atualizar porcentagem
+                const percentEl = document.getElementById('mainLoaderPercent');
+                if (percentEl) {
+                    percentEl.textContent = progress + '%';
+                }
+                
+                // Atualizar steps visuais
+                this.updateStepsVisual(step);
+                
+                // Atualizar ícone
+                this.updateIcon(progress);
+                
+                console.log(`📊 Loading: ${progress}% - ${text}`);
+            },
+            
+            updateStepsVisual(currentStep) {
+                const steps = document.querySelectorAll('.step');
+                steps.forEach((step, index) => {
+                    const stepNumber = index + 1;
+                    const icon = step.querySelector('.step-icon');
+                    
+                    if (stepNumber < currentStep) {
+                        step.className = 'step completed';
+                        if (icon) icon.textContent = '✅';
+                    } else if (stepNumber === currentStep) {
+                        step.className = 'step active';
+                        if (icon) icon.textContent = '⏳';
+                    } else {
+                        step.className = 'step';
+                        if (icon) icon.textContent = '⏳';
+                    }
+                });
+            },
+            
+            updateIcon(progress) {
+                const icon = document.getElementById('mainLoaderIcon');
+                if (!icon) return;
+                
+                if (progress >= 100) {
+                    icon.style.animation = 'none';
+                    icon.textContent = '🎉';
+                } else if (progress >= 80) {
+                    icon.textContent = '🚀';
+                } else if (progress >= 60) {
+                    icon.textContent = '⚙️';
+                } else if (progress >= 40) {
+                    icon.textContent = '🔗';
+                } else {
+                    icon.textContent = '❄️';
+                }
+            },
+            
+            complete() {
+                this.updateProgress(5);
+                
+                setTimeout(() => {
+                    const loader = document.getElementById('mainLoader');
+                    if (loader) {
+                        loader.style.opacity = '0';
+                        loader.style.transition = 'opacity 0.5s ease';
+                        
+                        setTimeout(() => {
+                            loader.style.display = 'none';
+                            this.showLoginScreen();
+                        }, 500);
+                    }
+                }, 1000);
+            },
+            
+            showLoginScreen() {
                 const loginScreen = document.getElementById('loginScreen');
                 if (loginScreen) {
                     loginScreen.style.display = 'flex';
+                    loginScreen.style.opacity = '0';
+                    
+                    setTimeout(() => {
+                        loginScreen.style.transition = 'opacity 0.5s ease';
+                        loginScreen.style.opacity = '1';
+                    }, 100);
                 }
                 
-                // Carregar scripts na ordem correta
-                loadScript('firebase-service.js')
-                    .then(() => loadScript('storage.js'))
-                    .then(() => loadScript('script.js'))
-                    .then(() => {
-                        console.log('🎉 Todos os scripts carregados!');
-                    })
-                    .catch(error => {
-                        console.error('❌ Erro ao carregar scripts:', error);
-                        alert('Erro ao carregar sistema. Recarregue a página.');
-                    });
-            } else {
-                console.error('❌ Firebase não carregou corretamente');
-                document.getElementById('firebaseLoader').innerHTML = `
-                    <div style="text-align: center; color: #ef4444;">
-                        <div style="font-size: 4rem; margin-bottom: 1rem;">⚠️</div>
-                        <h2 style="margin: 0; font-weight: 600;">Erro de Conexão</h2>
-                        <p style="margin: 0.5rem 0 0; opacity: 0.8;">Verifique sua conexão e recarregue a página</p>
-                        <button onclick="location.reload()" style="
-                            margin-top: 1rem; padding: 0.75rem 1.5rem; background: #ef4444;
-                            color: white; border: none; border-radius: 8px; cursor: pointer;
-                        ">Recarregar</button>
+                console.log('🔐 Tela de login exibida');
+            },
+            
+            showError(message) {
+                const loader = document.getElementById('mainLoader');
+                if (!loader) return;
+                
+                loader.innerHTML = `
+                    <div style="text-align: center; max-width: 500px; padding: 2rem;">
+                        <div style="font-size: 4rem; margin-bottom: 2rem; color: #ef4444;">⚠️</div>
+                        <h2 style="margin: 0 0 1rem 0; font-weight: 600; color: #ef4444;">Erro de Inicialização</h2>
+                        <p style="margin: 0 0 1rem 0; opacity: 0.9;">${message}</p>
+                        <p style="margin: 0 0 2rem 0; opacity: 0.7; font-size: 0.9rem;">
+                            Verifique sua conexão com a internet e tente novamente.
+                        </p>
+                        <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                            <button onclick="location.reload()" style="
+                                padding: 1rem 2rem; background: #ef4444; color: white;
+                                border: none; border-radius: 12px; cursor: pointer; font-weight: 600;
+                            ">🔄 Recarregar</button>
+                            <button onclick="window.forceRestart && window.forceRestart()" style="
+                                padding: 1rem 2rem; background: rgba(255,255,255,0.2); color: white;
+                                border: 2px solid rgba(255,255,255,0.3); border-radius: 12px; 
+                                cursor: pointer; font-weight: 600;
+                            ">🔧 Forçar Restart</button>
+                        </div>
                     </div>
                 `;
             }
-        });
-        
-        // Função para carregar scripts de forma sequencial
-        function loadScript(src) {
+        };
+
+        // ✅ FUNÇÃO DE LOGIN RÁPIDO
+        function quickLogin(username, password) {
+            console.log('⚡ Login rápido:', username);
+            
+            const usernameField = document.getElementById('username');
+            const passwordField = document.getElementById('password');
+            
+            if (usernameField && passwordField) {
+                usernameField.value = username;
+                passwordField.value = password;
+                
+                // Animação visual
+                [usernameField, passwordField].forEach(field => {
+                    field.style.background = 'rgba(14, 165, 233, 0.1)';
+                    field.style.borderColor = 'rgba(14, 165, 233, 0.5)';
+                });
+                
+                setTimeout(() => {
+                    [usernameField, passwordField].forEach(field => {
+                        field.style.background = '';
+                        field.style.borderColor = '';
+                    });
+                }, 1000);
+                
+                // Auto-submit após pequeno delay
+                setTimeout(() => {
+                    const loginForm = document.getElementById('loginForm');
+                    if (loginForm) {
+                        loginForm.dispatchEvent(new Event('submit'));
+                    }
+                }, 500);
+            }
+        }
+
+        // ✅ CARREGAMENTO SEQUENCIAL PRINCIPAL
+        async function initializeSystem() {
+            try {
+                console.log('🚀 Iniciando sistema...');
+                
+                // Passo 1: Carregar Firebase SDK
+                LoadingManager.updateProgress(1);
+                await loadFirebaseSDK();
+                
+                // Passo 2: Configurar Firebase
+                LoadingManager.updateProgress(2);
+                await loadAndConfigureFirebase();
+                
+                // Passo 3: Inicializar serviços
+                LoadingManager.updateProgress(3);
+                await loadFirebaseService();
+                
+                // Passo 4: Carregar aplicação
+                LoadingManager.updateProgress(4);
+                await loadApplication();
+                
+                // Passo 5: Finalizar
+                LoadingManager.complete();
+                
+                console.log('🎉 Sistema inicializado com sucesso!');
+                
+            } catch (error) {
+                console.error('❌ Erro na inicialização:', error);
+                LoadingManager.showError(error.message);
+            }
+        }
+
+        // ✅ CARREGAR FIREBASE SDK
+        async function loadFirebaseSDK() {
             return new Promise((resolve, reject) => {
-                const script = document.createElement('script');
-                script.src = src;
-                script.onload = () => {
-                    console.log('✅ Script carregado:', src);
+                if (typeof firebase !== 'undefined') {
+                    console.log('✅ Firebase SDK já carregado');
                     resolve();
+                    return;
+                }
+                
+                console.log('📦 Carregando Firebase SDK...');
+                
+                // Carregar scripts Firebase em ordem
+                const scripts = [
+                    'https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js',
+                    'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js',
+                    'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js'
+                ];
+                
+                let loaded = 0;
+                
+                scripts.forEach((src, index) => {
+                    const script = document.createElement('script');
+                    script.src = src;
+                    script.onload = () => {
+                        loaded++;
+                        console.log(`✅ Script ${index + 1}/3 carregado`);
+                        
+                        if (loaded === scripts.length) {
+                            if (typeof firebase !== 'undefined') {
+                                console.log('✅ Firebase SDK carregado completamente');
+                                resolve();
+                            } else {
+                                reject(new Error('Firebase SDK não inicializou'));
+                            }
+                        }
+                    };
+                    script.onerror = () => {
+                        reject(new Error(`Erro ao carregar ${src}`));
+                    };
+                    document.head.appendChild(script);
+                });
+            });
+        }
+
+        // ✅ CONFIGURAR FIREBASE
+        async function loadAndConfigureFirebase() {
+            return new Promise((resolve, reject) => {
+                console.log('🔧 Configurando Firebase...');
+                
+                const script = document.createElement('script');
+                script.src = 'firebase-config.js';
+                script.onload = () => {
+                    console.log('✅ Firebase config carregado');
+                    
+                    // Aguardar Firebase estar pronto
+                    const checkReady = () => {
+                        if (window.firebaseApp && window.firebaseAuth && window.firebaseDb) {
+                            console.log('✅ Firebase configurado e pronto');
+                            resolve();
+                        } else {
+                            setTimeout(checkReady, 100);
+                        }
+                    };
+                    
+                    checkReady();
+                    
+                    // Timeout de segurança
+                    setTimeout(() => {
+                        if (!window.firebaseApp) {
+                            reject(new Error('Firebase não inicializou no tempo esperado'));
+                        }
+                    }, 10000);
                 };
                 script.onerror = () => {
-                    console.error('❌ Erro ao carregar script:', src);
-                    reject(new Error(`Falha ao carregar ${src}`));
+                    reject(new Error('Erro ao carregar firebase-config.js'));
                 };
                 document.head.appendChild(script);
             });
+        }
+
+        // ✅ CARREGAR FIREBASE SERVICE
+        async function loadFirebaseService() {
+            return new Promise((resolve, reject) => {
+                console.log('🔧 Carregando Firebase Service...');
+                
+                const script = document.createElement('script');
+                script.src = 'firebase-service.js';
+                script.onload = () => {
+                    console.log('✅ Firebase Service carregado');
+                    
+                    // Aguardar service estar pronto
+                    const checkService = () => {
+                        if (window.firebaseService) {
+                            console.log('✅ Firebase Service pronto');
+                            resolve();
+                        } else {
+                            setTimeout(checkService, 100);
+                        }
+                    };
+                    
+                    checkService();
+                    
+                    // Timeout
+                    setTimeout(() => {
+                        if (!window.firebaseService) {
+                            reject(new Error('Firebase Service não inicializou'));
+                        }
+                    }, 5000);
+                };
+                script.onerror = () => {
+                    reject(new Error('Erro ao carregar firebase-service.js'));
+                };
+                document.head.appendChild(script);
+            });
+        }
+
+        // ✅ CARREGAR APLICAÇÃO
+        async function loadApplication() {
+            return new Promise((resolve, reject) => {
+                console.log('📱 Carregando aplicação...');
+                
+                // Carregar storage e script principal
+                const scripts = ['storage.js', 'script.js'];
+                let loaded = 0;
+                
+                scripts.forEach(src => {
+                    const script = document.createElement('script');
+                    script.src = src;
+                    script.onload = () => {
+                        loaded++;
+                        console.log(`✅ ${src} carregado`);
+                        
+                        if (loaded === scripts.length) {
+                            console.log('✅ Aplicação carregada');
+                            resolve();
+                        }
+                    };
+                    script.onerror = () => {
+                        reject(new Error(`Erro ao carregar ${src}`));
+                    };
+                    document.head.appendChild(script);
+                });
+            });
+        }
+
+        // ✅ FUNÇÃO DE RESTART FORÇADO
+        window.forceRestart = function() {
+            console.log('🔄 Forçando restart...');
+            
+            // Limpar tudo
+            delete window.firebaseApp;
+            delete window.firebaseAuth;
+            delete window.firebaseDb;
+            delete window.firebaseService;
+            delete window.firebaseReady;
+            delete window.app;
+            
+            // Recarregar página
+            setTimeout(() => {
+                location.reload();
+            }, 1000);
+        };
+
+        // ✅ INICIAR QUANDO DOM ESTIVER PRONTO
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeSystem);
+        } else {
+            initializeSystem();
         }
     </script>
 </body>

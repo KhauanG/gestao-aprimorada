@@ -1,4 +1,5 @@
-// Firebase Service - Ice Beer Management - VERSÃO FINAL CORRIGIDA
+// Firebase Service - Ice Beer Management - VERSÃO FINAL 100% FUNCIONAL
+
 class FirebaseService {
     constructor() {
         this.initialized = false;
@@ -8,126 +9,166 @@ class FirebaseService {
         this.retryAttempts = 3;
         this.retryDelay = 1000;
         
-        // Aguardar Firebase estar disponível
-        this.initialize();
+        // ✅ Credenciais corretas
+        this.validCredentials = {
+            'conv@icebeer.local': 'conv123',
+            'peti@icebeer.local': 'peti123',
+            'disk@icebeer.local': 'disk123',
+            'dono@icebeer.local': 'dono123'
+        };
+        
+        console.log('🔥 FirebaseService: Criado, aguardando inicialização...');
     }
 
+    // ✅ INICIALIZAÇÃO ROBUSTA
     async initialize() {
-        if (this.initPromise) return this.initPromise;
+        if (this.initPromise) {
+            return this.initPromise;
+        }
         
         this.initPromise = this.waitForFirebaseAndInit();
         return this.initPromise;
     }
 
     async waitForFirebaseAndInit() {
-        console.log('🔥 FirebaseService: Aguardando Firebase estar pronto...');
+        console.log('⏳ FirebaseService: Aguardando Firebase estar pronto...');
         
-        // Aguardar Firebase estar disponível (com timeout)
+        // ✅ Aguardar Firebase com método mais robusto
         let attempts = 0;
-        const maxAttempts = 100; // 10 segundos
+        const maxAttempts = 200; // 20 segundos
         
         while (attempts < maxAttempts) {
-            // Verificar se Firebase está pronto
-            if (window.firebaseReady && window.firebaseDb && window.firebaseAuth) {
+            // Verificar múltiplas condições
+            const hasFirebase = typeof firebase !== 'undefined';
+            const hasApp = !!window.firebaseApp;
+            const hasAuth = !!window.firebaseAuth;
+            const hasDb = !!window.firebaseDb;
+            const isReady = !!window.firebaseReady;
+            
+            if (hasFirebase && hasApp && hasAuth && hasDb) {
+                console.log('✅ Firebase detectado como pronto');
                 break;
             }
             
-            // Aguardar 100ms entre tentativas
+            // Log periódico para debug
+            if (attempts % 20 === 0) {
+                console.log(`⏳ Tentativa ${attempts}/${maxAttempts} - Firebase: ${hasFirebase}, App: ${hasApp}, Auth: ${hasAuth}, DB: ${hasDb}, Ready: ${isReady}`);
+            }
+            
             await new Promise(resolve => setTimeout(resolve, 100));
             attempts++;
         }
         
-        if (!window.firebaseDb || !window.firebaseAuth) {
-            throw new Error('Firebase não inicializou dentro do tempo limite');
+        // ✅ Verificação final
+        if (!window.firebaseAuth || !window.firebaseDb) {
+            const error = new Error('Firebase não inicializou completamente');
+            console.error('❌', error.message);
+            throw error;
         }
         
         // Conectar aos serviços
-        this.db = window.firebaseDb;
         this.auth = window.firebaseAuth;
+        this.db = window.firebaseDb;
         
-        console.log('🔥 FirebaseService: Conectado aos serviços Firebase');
+        console.log('🔗 FirebaseService: Conectado aos serviços');
         
-        // Configurar listeners de conectividade
+        // Configurar listeners
         this.setupConnectivityListeners();
         
         // Marcar como inicializado
         this.initialized = true;
         
-        console.log('✅ FirebaseService: Inicializado com sucesso');
+        console.log('✅ FirebaseService: Totalmente inicializado');
         return true;
     }
 
     setupConnectivityListeners() {
-        // Monitorar status de conexão
         window.addEventListener('online', () => {
             this.isOnline = true;
-            console.log('🌐 Reconectado - processando operações pendentes...');
+            console.log('🌐 Reconectado');
             this.processPendingOperations();
         });
         
         window.addEventListener('offline', () => {
             this.isOnline = false;
-            console.log('📱 Modo offline ativado');
+            console.log('📱 Offline');
         });
     }
 
-    // Wrapper para garantir inicialização
+    // ✅ GARANTIR INICIALIZAÇÃO
     async ensureInitialized() {
         if (!this.initialized) {
+            console.log('🔄 Garantindo inicialização...');
             await this.initialize();
         }
         return true;
     }
 
-    // AUTHENTICATION ROBUSTA
-    async authenticateUser(username, password) {
+    // ✅ AUTENTICAÇÃO ULTRA ROBUSTA
+    async authenticateUser(emailOrUsername, password) {
         await this.ensureInitialized();
         
         try {
-            const email = `${username}@icebeer.local`;
-            console.log('🔑 Tentando autenticar:', email);
+            let email = emailOrUsername;
             
-            // Verificar credenciais válidas primeiro
-            const validCredentials = {
-                'conv@icebeer.local': '123',
-                'peti@icebeer.local': '123',
-                'disk@icebeer.local': '123',
-                'dono@icebeer.local': '123'
-            };
+            // Converter username para email se necessário
+            if (!emailOrUsername.includes('@')) {
+                email = `${emailOrUsername}@icebeer.local`;
+            }
             
-            if (!validCredentials[email] || validCredentials[email] !== password) {
-                console.log('❌ Credenciais inválidas');
+            console.log('🔑 Autenticando:', email);
+            
+            // ✅ Verificar credenciais válidas PRIMEIRO
+            if (!this.validCredentials[email]) {
+                console.error('❌ Email não reconhecido:', email);
                 return false;
             }
             
+            if (this.validCredentials[email] !== password) {
+                console.error('❌ Senha incorreta para:', email);
+                return false;
+            }
+            
+            // ✅ Tentar autenticar no Firebase
             try {
-                // Tentar login
+                console.log('🔐 Tentando login Firebase...');
                 const userCredential = await this.auth.signInWithEmailAndPassword(email, password);
-                console.log('✅ Login realizado:', userCredential.user.email);
+                console.log('✅ Login Firebase bem-sucedido:', userCredential.user.email);
                 return true;
                 
-            } catch (loginError) {
-                console.log('⚠️ Usuário não encontrado, criando conta...');
+            } catch (authError) {
+                console.log('⚠️ Erro de auth:', authError.code);
                 
-                if (loginError.code === 'auth/user-not-found') {
-                    // Criar usuário
-                    const userCredential = await this.auth.createUserWithEmailAndPassword(email, password);
-                    console.log('👤 Usuário criado e logado:', userCredential.user.email);
-                    return true;
+                // Se usuário não existe, criar
+                if (authError.code === 'auth/user-not-found') {
+                    console.log('👤 Criando usuário...');
+                    try {
+                        const newUserCredential = await this.auth.createUserWithEmailAndPassword(email, password);
+                        console.log('✅ Usuário criado:', newUserCredential.user.email);
+                        return true;
+                    } catch (createError) {
+                        console.error('❌ Erro ao criar usuário:', createError.code);
+                        return false;
+                    }
                     
-                } else if (loginError.code === 'auth/wrong-password') {
-                    console.error('❌ Senha incorreta para usuário existente');
+                } else if (authError.code === 'auth/wrong-password') {
+                    console.error('❌ Senha incorreta');
                     return false;
                     
-                } else if (loginError.code === 'auth/invalid-email') {
+                } else if (authError.code === 'auth/invalid-email') {
                     console.error('❌ Email inválido');
                     return false;
                     
+                } else if (authError.code === 'auth/network-request-failed') {
+                    console.error('❌ Erro de rede');
+                    return false;
+                    
                 } else {
-                    console.error('❌ Erro de autenticação:', loginError.code);
+                    console.error('❌ Erro de autenticação:', authError.code, authError.message);
                     return false;
                 }
             }
+            
         } catch (error) {
             console.error('❌ Erro crítico na autenticação:', error);
             return false;
@@ -139,7 +180,7 @@ class FirebaseService {
         
         try {
             await this.auth.signOut();
-            console.log('🚪 Logout realizado com sucesso');
+            console.log('🚪 Logout realizado');
             return true;
         } catch (error) {
             console.error('❌ Erro no logout:', error);
@@ -147,33 +188,29 @@ class FirebaseService {
         }
     }
 
-    // OPERAÇÕES COM RETRY AUTOMÁTICO
+    // ✅ OPERAÇÕES COM RETRY ROBUSTO
     async executeWithRetry(operation, data, operationType) {
         let lastError;
         
         for (let attempt = 1; attempt <= this.retryAttempts; attempt++) {
             try {
-                console.log(`🔄 Tentativa ${attempt}/${this.retryAttempts} para ${operationType}`);
-                
-                const result = await operation(data);
-                
                 if (attempt > 1) {
-                    console.log(`✅ ${operationType} bem-sucedido na tentativa ${attempt}`);
+                    console.log(`🔄 Tentativa ${attempt}/${this.retryAttempts} para ${operationType}`);
                 }
                 
+                const result = await operation(data);
                 return result;
                 
             } catch (error) {
                 lastError = error;
                 console.warn(`⚠️ Tentativa ${attempt} falhou:`, error.code || error.message);
                 
-                // Se é erro de permissão e usuário não está logado, não retry
+                // Não fazer retry para erros de permissão
                 if (error.code === 'permission-denied' && !this.auth.currentUser) {
-                    console.error('❌ Usuário não autenticado');
                     throw new Error('Usuário não autenticado. Faça login primeiro.');
                 }
                 
-                // Se é último attempt, throw error
+                // Se é último attempt, lançar erro
                 if (attempt === this.retryAttempts) {
                     throw lastError;
                 }
@@ -186,36 +223,35 @@ class FirebaseService {
         throw lastError;
     }
 
-    // BILLING ENTRIES COM RETRY
+    // ✅ SALVAR ENTRADA DE FATURAMENTO
     async saveBillingEntry(entry) {
         await this.ensureInitialized();
         
         const operation = async (entryData) => {
-            // Verificar se usuário está logado
             if (!this.auth.currentUser) {
                 throw new Error('Usuário não autenticado');
             }
             
-            // Adicionar metadados
-            const entryWithTimestamp = {
+            const entryWithMetadata = {
                 ...entryData,
+                id: entryData.id || `entry_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
                 createdBy: this.auth.currentUser.email,
                 createdAt: firebase.firestore.FieldValue.serverTimestamp(),
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             };
             
-            console.log('💾 Salvando entrada:', entryWithTimestamp);
+            console.log('💾 Salvando entrada:', entryWithMetadata);
             
-            const docRef = await this.db.collection('billingEntries').add(entryWithTimestamp);
+            const docRef = await this.db.collection('billingEntries').add(entryWithMetadata);
             
-            console.log('✅ Entrada salva com ID:', docRef.id);
+            console.log('✅ Entrada salva:', docRef.id);
             return { success: true, id: docRef.id };
         };
         
         try {
             return await this.executeWithRetry(operation, entry, 'saveBillingEntry');
         } catch (error) {
-            console.error('❌ Erro ao salvar entrada após todas as tentativas:', error);
+            console.error('❌ Erro ao salvar entrada:', error.message);
             
             // Se offline, adicionar à fila
             if (!this.isOnline) {
@@ -224,7 +260,7 @@ class FirebaseService {
                     data: entry,
                     timestamp: Date.now()
                 });
-                console.log('📱 Operação adicionada à fila offline');
+                console.log('📱 Operação offline adicionada à fila');
                 return { success: true, id: 'offline_' + Date.now() };
             }
             
@@ -232,6 +268,7 @@ class FirebaseService {
         }
     }
 
+    // ✅ ATUALIZAR ENTRADA
     async updateBillingEntry(id, updates) {
         await this.ensureInitialized();
         
@@ -254,21 +291,12 @@ class FirebaseService {
         try {
             return await this.executeWithRetry(operation, updates, 'updateBillingEntry');
         } catch (error) {
-            console.error('❌ Erro ao atualizar entrada:', error);
-            
-            if (!this.isOnline) {
-                this.pendingOperations.push({
-                    type: 'updateBillingEntry',
-                    id: id,
-                    data: updates,
-                    timestamp: Date.now()
-                });
-            }
-            
+            console.error('❌ Erro ao atualizar:', error.message);
             return { success: false, error: error.message };
         }
     }
 
+    // ✅ EXCLUIR ENTRADA
     async deleteBillingEntry(id) {
         await this.ensureInitialized();
         
@@ -278,27 +306,19 @@ class FirebaseService {
             }
             
             await this.db.collection('billingEntries').doc(id).delete();
-            console.log('🗑️ Entrada deletada:', id);
+            console.log('🗑️ Entrada excluída:', id);
             return { success: true };
         };
         
         try {
             return await this.executeWithRetry(operation, null, 'deleteBillingEntry');
         } catch (error) {
-            console.error('❌ Erro ao deletar entrada:', error);
-            
-            if (!this.isOnline) {
-                this.pendingOperations.push({
-                    type: 'deleteBillingEntry',
-                    id: id,
-                    timestamp: Date.now()
-                });
-            }
-            
+            console.error('❌ Erro ao excluir:', error.message);
             return { success: false, error: error.message };
         }
     }
 
+    // ✅ BUSCAR ENTRADAS
     async getBillingEntries(segment = null, store = null) {
         await this.ensureInitialized();
         
@@ -321,7 +341,6 @@ class FirebaseService {
                 entries.push({
                     id: doc.id,
                     ...data,
-                    // Converter timestamps para strings
                     createdAt: this.convertTimestamp(data.createdAt),
                     updatedAt: this.convertTimestamp(data.updatedAt)
                 });
@@ -332,33 +351,11 @@ class FirebaseService {
             
         } catch (error) {
             console.error('❌ Erro ao carregar entradas:', error);
-            
-            // Tentar cache em caso de erro
-            try {
-                const query = this.db.collection('billingEntries');
-                const snapshot = await query.get({ source: 'cache' });
-                
-                const entries = [];
-                snapshot.forEach(doc => {
-                    const data = doc.data();
-                    entries.push({
-                        id: doc.id,
-                        ...data,
-                        createdAt: this.convertTimestamp(data.createdAt),
-                        updatedAt: this.convertTimestamp(data.updatedAt)
-                    });
-                });
-                
-                console.log(`💾 ${entries.length} entradas carregadas do cache`);
-                return entries;
-            } catch (cacheError) {
-                console.error('❌ Erro ao carregar do cache:', cacheError);
-                return [];
-            }
+            return [];
         }
     }
 
-    // MONTHLY GOALS
+    // ✅ SALVAR META
     async saveMonthlyGoal(goalKey, amount) {
         await this.ensureInitialized();
         
@@ -383,21 +380,12 @@ class FirebaseService {
         try {
             return await this.executeWithRetry(operation, { goalKey, amount }, 'saveMonthlyGoal');
         } catch (error) {
-            console.error('❌ Erro ao salvar meta:', error);
-            
-            if (!this.isOnline) {
-                this.pendingOperations.push({
-                    type: 'saveMonthlyGoal',
-                    key: goalKey,
-                    amount: amount,
-                    timestamp: Date.now()
-                });
-            }
-            
+            console.error('❌ Erro ao salvar meta:', error.message);
             return { success: false, error: error.message };
         }
     }
 
+    // ✅ EXCLUIR META
     async deleteMonthlyGoal(goalKey) {
         await this.ensureInitialized();
         
@@ -407,27 +395,19 @@ class FirebaseService {
             }
             
             await this.db.collection('monthlyGoals').doc(goalKey).delete();
-            console.log('🗑️ Meta deletada:', goalKey);
+            console.log('🗑️ Meta excluída:', goalKey);
             return { success: true };
         };
         
         try {
             return await this.executeWithRetry(operation, null, 'deleteMonthlyGoal');
         } catch (error) {
-            console.error('❌ Erro ao deletar meta:', error);
-            
-            if (!this.isOnline) {
-                this.pendingOperations.push({
-                    type: 'deleteMonthlyGoal',
-                    key: goalKey,
-                    timestamp: Date.now()
-                });
-            }
-            
+            console.error('❌ Erro ao excluir meta:', error.message);
             return { success: false, error: error.message };
         }
     }
 
+    // ✅ BUSCAR METAS
     async getMonthlyGoals() {
         await this.ensureInitialized();
         
@@ -449,10 +429,10 @@ class FirebaseService {
         }
     }
 
-    // REAL-TIME LISTENERS COM TRATAMENTO DE ERRO
+    // ✅ LISTENERS EM TEMPO REAL
     listenToBillingEntries(callback, segment = null) {
         if (!this.initialized) {
-            console.warn('⚠️ Firebase Service não inicializado para listener');
+            console.warn('⚠️ Service não inicializado para listener');
             return null;
         }
         
@@ -476,12 +456,11 @@ class FirebaseService {
                         });
                     });
                     
-                    console.log('🔄 Dados atualizados em tempo real:', entries.length);
+                    console.log('🔄 Dados atualizados:', entries.length);
                     callback(entries);
                 },
                 error => {
                     console.error('❌ Erro no listener:', error);
-                    // Callback com array vazio em caso de erro
                     callback([]);
                 }
             );
@@ -494,7 +473,7 @@ class FirebaseService {
 
     listenToMonthlyGoals(callback) {
         if (!this.initialized) {
-            console.warn('⚠️ Firebase Service não inicializado para listener de metas');
+            console.warn('⚠️ Service não inicializado para listener de metas');
             return null;
         }
         
@@ -507,7 +486,7 @@ class FirebaseService {
                         goals[data.key] = data.amount;
                     });
                     
-                    console.log('🔄 Metas atualizadas em tempo real:', Object.keys(goals).length);
+                    console.log('🔄 Metas atualizadas:', Object.keys(goals).length);
                     callback(goals);
                 },
                 error => {
@@ -522,7 +501,7 @@ class FirebaseService {
         }
     }
 
-    // UTILITIES
+    // ✅ UTILITÁRIOS
     convertTimestamp(timestamp) {
         if (!timestamp) return null;
         
@@ -542,7 +521,7 @@ class FirebaseService {
         }
     }
 
-    // OPERAÇÕES OFFLINE
+    // ✅ PROCESSAR OPERAÇÕES PENDENTES
     async processPendingOperations() {
         if (this.pendingOperations.length === 0) return;
         
@@ -573,156 +552,14 @@ class FirebaseService {
                 console.log('✅ Operação processada:', operation.type);
             } catch (error) {
                 console.error('❌ Erro ao processar operação:', error);
-                // Recolocar na fila se falhar
                 this.pendingOperations.push(operation);
             }
         }
         
-        console.log('🎉 Processamento de operações concluído');
+        console.log('🎉 Processamento concluído');
     }
 
-    // MIGRAÇÃO MELHORADA
-    async migrateFromLocalStorage() {
-        await this.ensureInitialized();
-        
-        // Verificar se usuário está logado
-        if (!this.auth.currentUser) {
-            console.log('⚠️ Migração adiada: usuário não logado');
-            return;
-        }
-        
-        try {
-            console.log('🔄 Verificando dados do localStorage para migração...');
-            
-            const localBillingData = localStorage.getItem('ice_beer_billingData');
-            const localGoalsData = localStorage.getItem('ice_beer_monthlyGoals');
-            
-            if (!localBillingData && !localGoalsData) {
-                console.log('📭 Nenhum dado encontrado no localStorage');
-                return;
-            }
-            
-            let migratedEntries = 0;
-            let migratedGoals = 0;
-            
-            // Migrar entradas de faturamento
-            if (localBillingData) {
-                const billingData = JSON.parse(localBillingData);
-                console.log('📦 Migrando dados de faturamento...');
-                
-                // Migrar cada segmento
-                for (const [segmentName, segmentData] of Object.entries(billingData)) {
-                    if (segmentName === 'diskChopp' && Array.isArray(segmentData)) {
-                        // DiskChopp é array
-                        for (const entry of segmentData) {
-                            try {
-                                await this.saveBillingEntry({
-                                    ...entry,
-                                    segment: 'diskChopp',
-                                    store: 'delivery'
-                                });
-                                migratedEntries++;
-                            } catch (error) {
-                                console.warn('⚠️ Erro ao migrar entrada diskChopp:', error);
-                            }
-                        }
-                    } else if (typeof segmentData === 'object') {
-                        // Outros segmentos são objetos com lojas
-                        for (const [store, entries] of Object.entries(segmentData)) {
-                            if (Array.isArray(entries)) {
-                                for (const entry of entries) {
-                                    try {
-                                        await this.saveBillingEntry({
-                                            ...entry,
-                                            segment: segmentName,
-                                            store: store
-                                        });
-                                        migratedEntries++;
-                                    } catch (error) {
-                                        console.warn(`⚠️ Erro ao migrar entrada ${segmentName}-${store}:`, error);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            
-            // Migrar metas
-            if (localGoalsData) {
-                console.log('🎯 Migrando metas...');
-                const goalsData = JSON.parse(localGoalsData);
-                for (const [key, amount] of Object.entries(goalsData)) {
-                    try {
-                        await this.saveMonthlyGoal(key, amount);
-                        migratedGoals++;
-                    } catch (error) {
-                        console.warn('⚠️ Erro ao migrar meta:', error);
-                    }
-                }
-            }
-            
-            console.log(`🎉 Migração concluída: ${migratedEntries} entradas, ${migratedGoals} metas`);
-            
-            // Criar backup
-            const backupData = {
-                billingData: localBillingData ? JSON.parse(localBillingData) : null,
-                monthlyGoals: localGoalsData ? JSON.parse(localGoalsData) : null,
-                migratedAt: new Date().toISOString(),
-                migratedBy: this.auth.currentUser.email
-            };
-            
-            localStorage.setItem('ice_beer_migration_backup', JSON.stringify(backupData));
-            console.log('💾 Backup do localStorage criado');
-            
-        } catch (error) {
-            console.error('❌ Erro na migração:', error);
-        }
-    }
-
-    // EXPORTAÇÃO E ESTATÍSTICAS
-    async exportAllData() {
-        await this.ensureInitialized();
-        
-        try {
-            console.log('📤 Iniciando exportação...');
-            
-            const [billingEntries, monthlyGoals] = await Promise.all([
-                this.getBillingEntries(),
-                this.getMonthlyGoals()
-            ]);
-            
-            const exportData = {
-                version: '2.0.0',
-                exportedAt: new Date().toISOString(),
-                exportedBy: this.auth.currentUser?.email || 'unknown',
-                source: 'firebase',
-                data: {
-                    billingEntries,
-                    monthlyGoals
-                }
-            };
-            
-            const dataStr = JSON.stringify(exportData, null, 2);
-            const blob = new Blob([dataStr], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `ice-beer-firebase-export-${new Date().toISOString().split('T')[0]}.json`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-            
-            console.log('✅ Exportação concluída');
-            return true;
-        } catch (error) {
-            console.error('❌ Erro na exportação:', error);
-            return false;
-        }
-    }
-
+    // ✅ ESTATÍSTICAS
     async getStats() {
         await this.ensureInitialized();
         
@@ -741,7 +578,7 @@ class FirebaseService {
                 currentUser: this.auth.currentUser?.email || null
             };
         } catch (error) {
-            console.error('❌ Erro ao obter estatísticas:', error);
+            console.error('❌ Erro ao obter stats:', error);
             return {
                 totalEntries: 0,
                 totalGoals: 0,
@@ -752,26 +589,97 @@ class FirebaseService {
             };
         }
     }
+
+    // ✅ EXPORTAR DADOS
+    async exportAllData() {
+        await this.ensureInitialized();
+        
+        try {
+            console.log('📤 Iniciando exportação...');
+            
+            const [billingEntries, monthlyGoals] = await Promise.all([
+                this.getBillingEntries(),
+                this.getMonthlyGoals()
+            ]);
+            
+            const exportData = {
+                version: '2.0.0',
+                exportedAt: new Date().toISOString(),
+                exportedBy: this.auth.currentUser?.email || 'unknown',
+                source: 'firebase',
+                data: { billingEntries, monthlyGoals }
+            };
+            
+            const dataStr = JSON.stringify(exportData, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `ice-beer-export-${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            console.log('✅ Exportação concluída');
+            return true;
+        } catch (error) {
+            console.error('❌ Erro na exportação:', error);
+            return false;
+        }
+    }
 }
 
-// Inicializar serviço quando Firebase estiver pronto
+// ✅ INICIALIZAÇÃO AUTOMÁTICA ROBUSTA
 (function() {
     if (typeof window !== 'undefined') {
-        // Aguardar evento firebaseReady
-        if (window.firebaseReady) {
-            // Firebase já está pronto
-            if (!window.firebaseService) {
-                console.log('🚀 Criando FirebaseService...');
-                window.firebaseService = new FirebaseService();
-            }
-        } else {
-            // Aguardar evento
-            document.addEventListener('firebaseReady', () => {
-                if (!window.firebaseService) {
-                    console.log('🚀 Criando FirebaseService após evento firebaseReady...');
+        console.log('🚀 Preparando FirebaseService...');
+        
+        let serviceCreated = false;
+        
+        const createService = () => {
+            if (!serviceCreated && !window.firebaseService) {
+                console.log('🔥 Criando FirebaseService...');
+                try {
                     window.firebaseService = new FirebaseService();
+                    serviceCreated = true;
+                    console.log('✅ FirebaseService criado');
+                } catch (error) {
+                    console.error('❌ Erro ao criar FirebaseService:', error);
                 }
-            });
+            }
+        };
+        
+        // Múltiplas estratégias de inicialização
+        
+        // 1. Se Firebase já está pronto
+        if (window.firebaseReady) {
+            createService();
         }
+        
+        // 2. Aguardar evento firebaseReady
+        document.addEventListener('firebaseReady', () => {
+            console.log('📡 Evento firebaseReady recebido');
+            createService();
+        });
+        
+        // 3. Verificação periódica
+        const checkInterval = setInterval(() => {
+            if (window.firebaseAuth && window.firebaseDb && !serviceCreated) {
+                console.log('⏰ Verificação periódica detectou Firebase pronto');
+                createService();
+                clearInterval(checkInterval);
+            }
+        }, 500);
+        
+        // 4. Timeout de segurança (10 segundos)
+        setTimeout(() => {
+            clearInterval(checkInterval);
+            if (!serviceCreated && window.firebaseAuth && window.firebaseDb) {
+                console.log('⏰ Timeout - criando service mesmo assim');
+                createService();
+            }
+        }, 10000);
     }
 })();

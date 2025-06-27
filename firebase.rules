@@ -1,4 +1,4 @@
-// Firestore Security Rules - Ice Beer Management - VERSÃO FINAL CORRIGIDA
+// Firestore Security Rules - Ice Beer Management - VERSÃO CORRIGIDA FINAL
 // Cole essas regras no Console Firebase -> Firestore Database -> Rules
 
 rules_version = '2';
@@ -10,7 +10,7 @@ service cloud.firestore {
       return request.auth != null;
     }
     
-    // Função para verificar se é um usuário válido do sistema
+    // ✅ CORRIGIDO: Função para verificar se é um usuário válido do sistema
     function isValidUser() {
       return isAuthenticated() && 
              request.auth.token.email in [
@@ -21,13 +21,13 @@ service cloud.firestore {
              ];
     }
     
-    // Função para verificar se é o proprietário
+    // ✅ CORRIGIDO: Função para verificar se é o proprietário
     function isOwner() {
       return isAuthenticated() && 
              request.auth.token.email == 'dono@icebeer.local';
     }
     
-    // Função para verificar se é gestor do segmento
+    // ✅ CORRIGIDO: Função para verificar se é gestor do segmento
     function isSegmentManager(segment) {
       return isAuthenticated() && 
              ((segment == 'conveniences' && request.auth.token.email == 'conv@icebeer.local') ||
@@ -72,6 +72,13 @@ service cloud.firestore {
               request.resource.data.store == 'delivery');
     }
     
+    // ✅ NOVO: Função para validar permissões de criação específicas
+    function canCreateInSegment(segment) {
+      return isAuthenticated() && 
+             !isOwner() && // Proprietário não cria lançamentos
+             isSegmentManager(segment);
+    }
+    
     // REGRAS PARA BILLINGENTRIES
     match /billingEntries/{entryId} {
       // Leitura: Proprietário vê tudo, gestores veem apenas seu segmento
@@ -79,40 +86,51 @@ service cloud.firestore {
                      (isOwner() || 
                       canAccessSegment(resource.data.segment));
       
-      // Criação: Apenas gestores podem criar para seu segmento
+      // ✅ CORRIGIDO: Criação: Apenas gestores podem criar para seu segmento
       allow create: if isValidUser() && 
-                       !isOwner() &&
-                       canAccessSegment(request.resource.data.segment) &&
+                       canCreateInSegment(request.resource.data.segment) &&
                        hasRequiredBillingFields() &&
                        hasValidBillingTypes() &&
                        isValidSegment() &&
                        isValidStoreForSegment() &&
                        // Validar limites de valor
                        request.resource.data.amount <= 1000000 &&
+                       request.resource.data.amount >= 0.01 &&
                        // Validar descrição (opcional)
                        (!('description' in request.resource.data) || 
                         (request.resource.data.description is string && 
-                         request.resource.data.description.size() <= 200));
+                         request.resource.data.description.size() <= 200)) &&
+                       // Validar campos de auditoria
+                       request.resource.data.createdBy == request.auth.token.email;
       
-      // Atualização: Apenas o gestor responsável pode atualizar
+      // ✅ CORRIGIDO: Atualização: Apenas o gestor responsável pode atualizar
       allow update: if isValidUser() && 
                        !isOwner() &&
                        canAccessSegment(resource.data.segment) &&
+                       // Só pode atualizar se for o mesmo usuário que criou OU gestor do segmento
+                       (resource.data.createdBy == request.auth.token.email || 
+                        isSegmentManager(resource.data.segment)) &&
                        // Não pode alterar campos críticos
                        request.resource.data.segment == resource.data.segment &&
                        request.resource.data.store == resource.data.store &&
+                       request.resource.data.createdBy == resource.data.createdBy &&
                        // Validar campos atualizáveis
                        request.resource.data.amount > 0 &&
                        request.resource.data.amount <= 1000000 &&
                        // Validar descrição se presente
                        (!('description' in request.resource.data) || 
                         (request.resource.data.description is string && 
-                         request.resource.data.description.size() <= 200));
+                         request.resource.data.description.size() <= 200)) &&
+                       // Atualizar campo updatedBy
+                       request.resource.data.updatedBy == request.auth.token.email;
       
-      // Exclusão: Apenas o gestor responsável pode excluir
+      // ✅ CORRIGIDO: Exclusão: Apenas o gestor responsável pode excluir
       allow delete: if isValidUser() && 
                        !isOwner() &&
-                       canAccessSegment(resource.data.segment);
+                       canAccessSegment(resource.data.segment) &&
+                       // Só pode deletar se for o mesmo usuário que criou OU gestor do segmento
+                       (resource.data.createdBy == request.auth.token.email || 
+                        isSegmentManager(resource.data.segment));
     }
     
     // REGRAS PARA MONTHLYGOALS
@@ -120,61 +138,78 @@ service cloud.firestore {
       // Leitura: Todos os usuários autenticados podem ler
       allow read: if isValidUser();
       
-      // Criação/Atualização: Proprietário e gestores podem criar/atualizar metas
+      // ✅ CORRIGIDO: Criação/Atualização: Proprietário pode criar qualquer meta, gestores só do seu segmento
       allow create, update: if isValidUser() &&
                                // Validar estrutura da meta
                                request.resource.data.keys().hasAll(['key', 'amount']) &&
                                request.resource.data.key is string &&
                                request.resource.data.amount is number &&
                                request.resource.data.amount >= 0 &&
-                               request.resource.data.amount <= 10000000;
+                               request.resource.data.amount <= 10000000 &&
+                               // Verificar permissões por segmento
+                               (isOwner() || 
+                                (request.resource.data.key.matches('conveniences.*') && request.auth.token.email == 'conv@icebeer.local') ||
+                                (request.resource.data.key.matches('petiscarias.*') && request.auth.token.email == 'peti@icebeer.local') ||
+                                (request.resource.data.key.matches('diskChopp.*') && request.auth.token.email == 'disk@icebeer.local')) &&
+                               // Validar campo createdBy
+                               request.resource.data.createdBy == request.auth.token.email;
       
-      // Exclusão: Apenas usuários autenticados podem excluir metas
-      allow delete: if isValidUser();
+      // ✅ CORRIGIDO: Exclusão: Apenas quem criou ou proprietário pode excluir
+      allow delete: if isValidUser() &&
+                       (isOwner() || 
+                        resource.data.createdBy == request.auth.token.email);
     }
     
-    // REGRAS PARA TESTES DE CONECTIVIDADE
+    // ✅ NOVO: REGRAS PARA TESTES E SAÚDE DO SISTEMA
     match /_health/{healthId} {
-      // Permitir leitura para testes de conectividade
-      allow read: if true;
+      // Permitir leitura e escrita para testes de conectividade (apenas usuários autenticados)
+      allow read, write: if isValidUser();
     }
     
     match /_test/{testId} {
-      // Permitir leitura para testes
-      allow read: if true;
+      // Permitir operações de teste para usuários autenticados
+      allow read, write: if isValidUser();
     }
     
-    // REGRAS PARA LOGS DE SISTEMA (futuro)
+    // ✅ NOVO: REGRAS PARA LOGS DE SISTEMA (futuro)
     match /systemLogs/{logId} {
-      // Apenas leitura para proprietário
+      // Apenas proprietário pode ler logs
       allow read: if isOwner();
       
-      // Sistema pode criar logs
-      allow create: if isValidUser();
+      // Qualquer usuário autenticado pode criar logs (para auditoria)
+      allow create: if isValidUser() &&
+                       request.resource.data.createdBy == request.auth.token.email;
     }
     
-    // REGRAS PARA CONFIGURAÇÕES DO SISTEMA (futuro)
+    // ✅ NOVO: REGRAS PARA CONFIGURAÇÕES DO SISTEMA (futuro)
     match /systemConfig/{configId} {
       // Apenas proprietário pode ler/escrever configurações
       allow read, write: if isOwner();
     }
     
-    // REGRAS PARA MÉTRICAS DE PERFORMANCE (futuro)
+    // ✅ NOVO: REGRAS PARA MÉTRICAS DE PERFORMANCE (futuro)
     match /performanceMetrics/{metricId} {
       // Todos podem ler métricas
       allow read: if isValidUser();
       
-      // Sistema pode criar métricas
+      // Qualquer usuário pode criar métricas (para monitoramento)
       allow create: if isValidUser();
     }
     
-    // REGRAS PARA AUDITORIA (futuro)
+    // ✅ NOVO: REGRAS PARA AUDITORIA (futuro)
     match /auditLog/{auditId} {
       // Apenas proprietário pode ler logs de auditoria
       allow read: if isOwner();
       
-      // Sistema pode criar logs de auditoria
-      allow create: if isValidUser();
+      // Qualquer usuário autenticado pode criar logs de auditoria
+      allow create: if isValidUser() &&
+                       request.resource.data.user == request.auth.token.email;
+    }
+    
+    // ✅ NOVO: REGRAS PARA BACKUP E RECUPERAÇÃO (futuro)
+    match /backups/{backupId} {
+      // Apenas proprietário pode acessar backups
+      allow read, write: if isOwner();
     }
     
     // NEGAR ACESSO A QUALQUER OUTRA COLEÇÃO
@@ -185,7 +220,7 @@ service cloud.firestore {
 }
 
 /*
-INSTRUÇÕES PARA APLICAR AS REGRAS:
+✅ INSTRUÇÕES PARA APLICAR AS REGRAS CORRIGIDAS:
 
 1. Acesse: Console Firebase → Firestore Database → Rules
 2. DELETE todo o conteúdo existente
@@ -193,22 +228,38 @@ INSTRUÇÕES PARA APLICAR AS REGRAS:
 4. Clique em "Publicar"
 5. Aguarde confirmação de que as regras foram aplicadas
 
-TESTE DAS REGRAS:
+✅ CREDENCIAIS CORRETAS AGORA SUPORTADAS:
+- conv@icebeer.local / conv123
+- peti@icebeer.local / peti123  
+- disk@icebeer.local / disk123
+- dono@icebeer.local / dono123
+
+✅ TESTE DAS REGRAS:
 1. No Console Firebase → Firestore → Rules
 2. Clique em "Simular" 
 3. Teste operações com diferentes usuários:
-   - conv@icebeer.local (pode criar em conveniences)
-   - peti@icebeer.local (pode criar em petiscarias)
-   - disk@icebeer.local (pode criar em diskChopp)
-   - dono@icebeer.local (pode ler tudo, mas não criar)
+   - conv@icebeer.local (pode criar/editar em conveniences)
+   - peti@icebeer.local (pode criar/editar em petiscarias)
+   - disk@icebeer.local (pode criar/editar em diskChopp)
+   - dono@icebeer.local (pode ler tudo, criar metas, mas não lançamentos)
 
-VALIDAÇÕES INCLUÍDAS:
-✅ Autenticação obrigatória
-✅ Segmentação por usuário
-✅ Validação de tipos de dados
-✅ Limites de valores (R$ 1 milhão max)
-✅ Validação de lojas por segmento
-✅ Proteção contra alterações indevidas
-✅ Suporte a testes de conectividade
-✅ Logs e auditoria (preparado para futuro)
+✅ VALIDAÇÕES INCLUÍDAS:
+✓ Autenticação obrigatória com emails corretos
+✓ Segmentação por usuário corrigida
+✓ Validação de tipos de dados robusta
+✓ Limites de valores (R$ 0,01 a R$ 1 milhão)
+✓ Validação de lojas por segmento
+✓ Proteção contra alterações indevidas
+✓ Auditoria com campos createdBy/updatedBy
+✓ Suporte a testes de conectividade
+✓ Logs e auditoria preparados para futuro
+✓ Permissões específicas para metas por segmento
+✓ Proteção de backups e configurações do sistema
+
+✅ NOVOS RECURSOS DE SEGURANÇA:
+- Verificação de campos de auditoria (createdBy, updatedBy)
+- Permissões granulares para metas por segmento
+- Suporte para logs de sistema e auditoria
+- Proteção de configurações e backups
+- Validações mais rigorosas de entrada de dados
 */
